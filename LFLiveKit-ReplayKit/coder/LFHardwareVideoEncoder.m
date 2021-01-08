@@ -35,7 +35,8 @@
         NSLog(@"USE LFHardwareVideoEncoder");
         _configuration = configuration;
         if (_configuration.encoderType == LFVideoH265Encoder) {
-            if ([[AVAssetExportSession allExportPresets] containsObject:AVAssetExportPresetHEVCHighestQuality]) {
+            if ([[AVAssetExportSession allExportPresets] containsObject:AVAssetExportPresetHEVCHighestQuality] &&
+                VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC)) {
                 _configuration.encoderType = LFVideoH265Encoder;
             }else {
                 _configuration.encoderType = LFVideoH264Encoder;

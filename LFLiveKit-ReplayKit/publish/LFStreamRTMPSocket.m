@@ -73,6 +73,7 @@ SAVC(encoder);
 //SAVC(av_stereo);
 SAVC(fileSize);
 SAVC(avc1);
+SAVC(hevc);
 SAVC(mp4a);
 
 @interface LFStreamRTMPSocket ()<LFStreamingBufferDelegate>
@@ -352,9 +353,13 @@ Failed:
     // videosize
     enc = AMF_EncodeNamedNumber(enc, pend, &av_width, _stream.videoConfiguration.videoSize.width);
     enc = AMF_EncodeNamedNumber(enc, pend, &av_height, _stream.videoConfiguration.videoSize.height);
-
+    
     // video
-    enc = AMF_EncodeNamedString(enc, pend, &av_videocodecid, &av_avc1);
+    if (_stream.videoConfiguration.encoderType == LFVideoH264Encoder) {
+        enc = AMF_EncodeNamedString(enc, pend, &av_videocodecid, &av_avc1);
+    }else if (_stream.videoConfiguration.encoderType == LFVideoH265Encoder) {
+        enc = AMF_EncodeNamedString(enc, pend, &av_videocodecid, &av_hevc);
+    }
 
     enc = AMF_EncodeNamedNumber(enc, pend, &av_videodatarate, _stream.videoConfiguration.videoBitRate / 1000.f);
     enc = AMF_EncodeNamedNumber(enc, pend, &av_framerate, _stream.videoConfiguration.videoFrameRate);
@@ -402,6 +407,13 @@ Failed:
     body = (unsigned char *)malloc(rtmpLength);
     memset(body, 0, rtmpLength);
 
+    /* Video FLV Tag
+    FrameType 是 4 个 bit。取值 1：keyframe，2：inter frame
+    CodecID 是 4 个 bit。取值 7，表示 AVC/H264
+    AVCPacketType 是 8 个 bit。取值 0：表示 Composition Time 后面的数据是 AVCDecorderConfigurationRecord 结构，如图一所示；取值 1：表示 Composition Time 后面的数据是 H264 NALU 格式，如图二所示。
+    Composition Time 是 24 个 bit。表示时间，暂且不用关注。
+     */
+    
     body[iIndex++] = 0x17;
     body[iIndex++] = 0x00;
 
