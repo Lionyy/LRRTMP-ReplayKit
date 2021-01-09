@@ -34,5 +34,10 @@
     "c++",
     "z"
   ],
-  "requires_arc": true
+  "requires_arc": true,
+  "dependencies": {
+    "CocoaAsyncSocket": [
+
+    ]
+  }
 }

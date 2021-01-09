@@ -343,7 +343,7 @@ static void VideoCompressonOutputCallback(void *VTref, void *VTFrameRef, OSStatu
     self->fp = fopen([path cStringUsingEncoding:NSUTF8StringEncoding], "wb");
 }
 
-- (NSString *)GetFilePathByfileName:(NSString*)filename {
+- (NSString *)GetFilePathByfileName:(NSString *)filename {
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     NSString *documentsDirectory = [paths objectAtIndex:0];
     NSString *writablePath = [documentsDirectory stringByAppendingPathComponent:filename];

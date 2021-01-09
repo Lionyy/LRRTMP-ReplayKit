@@ -1,16 +1,23 @@
 PODS:
-  - LFLiveKit-ReplayKit (0.0.1)
+  - CocoaAsyncSocket (7.6.5)
+  - LFLiveKit-ReplayKit (0.0.1):
+    - CocoaAsyncSocket
 
 DEPENDENCIES:
   - LFLiveKit-ReplayKit (from `../../.`)
+
+SPEC REPOS:
+  trunk:
+    - CocoaAsyncSocket
 
 EXTERNAL SOURCES:
   LFLiveKit-ReplayKit:
     :path: "../../."
 
 SPEC CHECKSUMS:
-  LFLiveKit-ReplayKit: a7715109934e0b48696e3d1400d8e3dc696bbca0
+  CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
+  LFLiveKit-ReplayKit: 6355a8ae1f319e26b8ff7614d80633dadbd8d993
 
-PODFILE CHECKSUM: 25d379fcd1c2bfab62345182bcd25199e43638cb
+PODFILE CHECKSUM: 4cb10acae4ba98dea5cf975583bb631ae73a8c20
 
-COCOAPODS: 1.6.0.beta.1
+COCOAPODS: 1.10.0

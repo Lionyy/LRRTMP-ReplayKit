@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		65EC8DEB25A8635800289461 /* LYUDPSession.m in Sources */ = {isa = PBXBuildFile; fileRef = 65EC8DEA25A8635800289461 /* LYUDPSession.m */; };
 		7D0A55C221B8FFE100695148 /* ReplayKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D0A55C121B8FFE100695148 /* ReplayKit.framework */; };
 		7D0A55C621B8FFE100695148 /* SampleHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 7D0A55C521B8FFE100695148 /* SampleHandler.m */; };
 		7D0A55CD21B8FFE100695148 /* ReplayKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D0A55C121B8FFE100695148 /* ReplayKit.framework */; };
@@ -62,6 +63,8 @@
 		0E2A237194B7F98983539602 /* Pods-Recoder.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Recoder.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Recoder/Pods-Recoder.debug.xcconfig"; sourceTree = "<group>"; };
 		289A9C4510CD7EA6F4CE9897 /* Pods-LFLiveKitDemo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LFLiveKitDemo.debug.xcconfig"; path = "Pods/Target Support Files/Pods-LFLiveKitDemo/Pods-LFLiveKitDemo.debug.xcconfig"; sourceTree = "<group>"; };
 		5B1CCEEE06FCFAF75D105A51 /* libPods-LFLiveKitDemo.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-LFLiveKitDemo.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		65EC8DE925A8635800289461 /* LYUDPSession.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LYUDPSession.h; sourceTree = "<group>"; };
+		65EC8DEA25A8635800289461 /* LYUDPSession.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LYUDPSession.m; sourceTree = "<group>"; };
 		7D0A55C021B8FFE100695148 /* Recoder.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Recoder.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		7D0A55C121B8FFE100695148 /* ReplayKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ReplayKit.framework; path = System/Library/Frameworks/ReplayKit.framework; sourceTree = SDKROOT; };
 		7D0A55C421B8FFE100695148 /* SampleHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SampleHandler.h; sourceTree = "<group>"; };
@@ -141,6 +144,8 @@
 				7D0A55C721B8FFE100695148 /* Info.plist */,
 				7D0A55E221B9006000695148 /* ZFUploadTool.h */,
 				7D0A55E321B9006000695148 /* ZFUploadTool.m */,
+				65EC8DE925A8635800289461 /* LYUDPSession.h */,
+				65EC8DEA25A8635800289461 /* LYUDPSession.m */,
 			);
 			path = Recoder;
 			sourceTree = "<group>";
@@ -413,6 +418,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7D0A55E421B9006000695148 /* ZFUploadTool.m in Sources */,
+				65EC8DEB25A8635800289461 /* LYUDPSession.m in Sources */,
 				7D0A55C621B8FFE100695148 /* SampleHandler.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
