@@ -7,6 +7,7 @@
 
 #import "LYStreamingUDPSocket.h"
 #import <GCDAsyncUdpSocket.h>
+#import "media_proto.h"
 
 static const NSInteger RetryTimesBreaken = 5;  ///<  重连1分钟  3秒一次 一共20次
 static const NSInteger RetryTimesMargin = 3;
