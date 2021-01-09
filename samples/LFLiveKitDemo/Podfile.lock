@@ -1,17 +1,23 @@
 PODS:
   - CocoaAsyncSocket (7.6.5)
+  - FGRoute (1.0.5)
   - LFLiveKit-ReplayKit (0.0.1):
     - CocoaAsyncSocket
+  - MBProgressHUD (1.2.0)
   - MJExtension (3.2.2)
 
 DEPENDENCIES:
   - CocoaAsyncSocket
+  - FGRoute
   - LFLiveKit-ReplayKit (from `../../.`)
+  - MBProgressHUD
   - MJExtension
 
 SPEC REPOS:
   trunk:
     - CocoaAsyncSocket
+    - FGRoute
+    - MBProgressHUD
     - MJExtension
 
 EXTERNAL SOURCES:
@@ -20,9 +26,11 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
+  FGRoute: 012077ebabb2841d2af3baf63b30e72841f35ba1
   LFLiveKit-ReplayKit: 6355a8ae1f319e26b8ff7614d80633dadbd8d993
+  MBProgressHUD: 3ee5efcc380f6a79a7cc9b363dd669c5e1ae7406
   MJExtension: d9b9c74cbdeb724c1e9ecbb157b318276e62e876
 
-PODFILE CHECKSUM: a326bfa8abeed17cb5fe958c6991a477530248bc
+PODFILE CHECKSUM: d85eddc05558ee8629d11856ed89fe8c776cc7a1
 
 COCOAPODS: 1.10.0

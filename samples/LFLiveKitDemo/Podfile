@@ -5,8 +5,10 @@ target 'LFLiveKitDemo' do
     inhibit_all_warnings!
     
     pod 'LFLiveKit-ReplayKit', :path => '../../.'
+    pod 'MBProgressHUD'
     pod 'MJExtension'
     pod 'CocoaAsyncSocket'
+    pod 'FGRoute'
 end
 
 target 'Recoder' do

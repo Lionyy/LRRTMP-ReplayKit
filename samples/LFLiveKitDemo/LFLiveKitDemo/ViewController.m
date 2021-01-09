@@ -116,7 +116,13 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
     [self.view addSubview:statrButton2];
     
     _udpSession = [[LYUDPSession alloc] init];
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
     
+    [_udpSession sendBroadcast];
 }
 
 #pragma mark -- Getter Setter
@@ -174,7 +180,7 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
 
 
 - (void)perpare {
-
+    
     [_udpSession sendBroadcast];
     
 //    LFLiveStreamInfo *stream = [LFLiveStreamInfo new];
