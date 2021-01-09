@@ -2,13 +2,17 @@ PODS:
   - CocoaAsyncSocket (7.6.5)
   - LFLiveKit-ReplayKit (0.0.1):
     - CocoaAsyncSocket
+  - MJExtension (3.2.2)
 
 DEPENDENCIES:
+  - CocoaAsyncSocket
   - LFLiveKit-ReplayKit (from `../../.`)
+  - MJExtension
 
 SPEC REPOS:
   trunk:
     - CocoaAsyncSocket
+    - MJExtension
 
 EXTERNAL SOURCES:
   LFLiveKit-ReplayKit:
@@ -17,7 +21,8 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   LFLiveKit-ReplayKit: 6355a8ae1f319e26b8ff7614d80633dadbd8d993
+  MJExtension: d9b9c74cbdeb724c1e9ecbb157b318276e62e876
 
-PODFILE CHECKSUM: 4cb10acae4ba98dea5cf975583bb631ae73a8c20
+PODFILE CHECKSUM: a326bfa8abeed17cb5fe958c6991a477530248bc
 
 COCOAPODS: 1.10.0

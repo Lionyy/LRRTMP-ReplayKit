@@ -29,5 +29,7 @@
 		<key>RPBroadcastProcessMode</key>
 		<string>RPBroadcastProcessModeSampleBuffer</string>
 	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>是否允许使用本地网络搜索本地网络设备？允许此权限方可进行本地网络投屏操作。</string>
 </dict>
 </plist>

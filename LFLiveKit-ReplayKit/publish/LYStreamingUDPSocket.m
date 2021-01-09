@@ -56,7 +56,7 @@ static const NSInteger RetryTimesMargin = 3;
     return self;
 }
 
-- (void)dealloc{
+- (void)dealloc {
     [self removeObserver:self forKeyPath:@"isSending"];
 }
 
@@ -242,7 +242,7 @@ Failed:
     return -1;
 }
 
-#pragma mark -- Rtmp Send
+#pragma mark - UDP Send
 
 - (void)sendMetaData {
 

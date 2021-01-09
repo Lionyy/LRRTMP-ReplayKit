@@ -10,6 +10,7 @@
 #import <ReplayKit/ReplayKit.h>
 #import <LFLiveKit.h>
 #import "AppDelegate.h"
+#import "LYUDPSession.h"
 
 inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
     if (elapsed_milli <= 0) {
@@ -31,6 +32,7 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
 
 @interface ViewController () <LFLiveSessionDelegate, RPBroadcastControllerDelegate, RPBroadcastActivityViewControllerDelegate>
 @property (nonatomic, strong) LFLiveSession *session;
+@property (nonatomic, strong) LYUDPSession * udpSession;
 @property (nonatomic, strong) UIView *testView;
 @property (nonatomic, strong) RPBroadcastController *broadcastController;
 @property (nonatomic, strong) UIView *pickerView;
@@ -113,6 +115,8 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
     [self.view addSubview:statrButton1];
     [self.view addSubview:statrButton2];
     
+    _udpSession = [[LYUDPSession alloc] init];
+    
 }
 
 #pragma mark -- Getter Setter
@@ -170,14 +174,14 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
 
 
 - (void)perpare {
-    LFLiveStreamInfo *stream = [LFLiveStreamInfo new];
-    // 直播推流地址
-    stream.url = @"rtmp://192.168.45.174/live/123";
+
+    [_udpSession sendBroadcast];
     
-    [self.session startLive:stream];
-    
-    
-    [[RPScreenRecorder sharedRecorder] setMicrophoneEnabled:YES];
+//    LFLiveStreamInfo *stream = [LFLiveStreamInfo new];
+//    // 直播推流地址
+//    stream.url = @"rtmp://192.168.45.174/live/123";
+//    [self.session startLive:stream];
+//    [[RPScreenRecorder sharedRecorder] setMicrophoneEnabled:YES];
 }
 
 - (void)statrButtonClick:(UIButton *)sender {
