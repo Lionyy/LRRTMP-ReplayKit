@@ -1,5 +1,5 @@
 PODS:
-  - CocoaAsyncSocket (7.6.5)
+  - CocoaAsyncSocket (7.6.4)
   - FGRoute (1.0.5)
   - LFLiveKit-ReplayKit (0.0.1):
     - CocoaAsyncSocket
@@ -25,7 +25,7 @@ EXTERNAL SOURCES:
     :path: "../../."
 
 SPEC CHECKSUMS:
-  CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
+  CocoaAsyncSocket: 694058e7c0ed05a9e217d1b3c7ded962f4180845
   FGRoute: 012077ebabb2841d2af3baf63b30e72841f35ba1
   LFLiveKit-ReplayKit: 6355a8ae1f319e26b8ff7614d80633dadbd8d993
   MBProgressHUD: 3ee5efcc380f6a79a7cc9b363dd669c5e1ae7406
@@ -33,4 +33,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: d85eddc05558ee8629d11856ed89fe8c776cc7a1
 
-COCOAPODS: 1.10.0
+COCOAPODS: 1.10.1

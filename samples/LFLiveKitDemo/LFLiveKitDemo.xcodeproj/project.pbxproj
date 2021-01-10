@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6512696B25AB20B900C53E46 /* Recoder.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 7D0A55C021B8FFE100695148 /* Recoder.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		6512696F25AB20BF00C53E46 /* RecoderSetupUI.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 7D0A55CC21B8FFE100695148 /* RecoderSetupUI.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		655FCB4025A986CF009A5376 /* LKAlert.m in Sources */ = {isa = PBXBuildFile; fileRef = 655FCB3A25A986CF009A5376 /* LKAlert.m */; };
 		655FCB4125A986CF009A5376 /* LYUDPSession.m in Sources */ = {isa = PBXBuildFile; fileRef = 655FCB3B25A986CF009A5376 /* LYUDPSession.m */; };
 		655FCB4225A986CF009A5376 /* YYReachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 655FCB3E25A986CF009A5376 /* YYReachability.m */; };
@@ -15,8 +17,6 @@
 		7D0A55CD21B8FFE100695148 /* ReplayKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D0A55C121B8FFE100695148 /* ReplayKit.framework */; };
 		7D0A55CF21B8FFE100695148 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D0A55CE21B8FFE100695148 /* UIKit.framework */; };
 		7D0A55D321B8FFE100695148 /* BroadcastSetupViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 7D0A55D221B8FFE100695148 /* BroadcastSetupViewController.m */; };
-		7D0A55D721B8FFE100695148 /* RecoderSetupUI.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 7D0A55CC21B8FFE100695148 /* RecoderSetupUI.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		7D0A55DA21B8FFE100695148 /* Recoder.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 7D0A55C021B8FFE100695148 /* Recoder.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		7D0A55E421B9006000695148 /* ZFUploadTool.m in Sources */ = {isa = PBXBuildFile; fileRef = 7D0A55E321B9006000695148 /* ZFUploadTool.m */; };
 		7D7F5D69219BF41F0040FBE4 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D7F5D68219BF41F0040FBE4 /* libc++.tbd */; };
 		84D8B42B1D75778B00752B56 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 84D8B42A1D75778B00752B56 /* main.m */; };
@@ -53,8 +53,8 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				7D0A55D721B8FFE100695148 /* RecoderSetupUI.appex in Embed App Extensions */,
-				7D0A55DA21B8FFE100695148 /* Recoder.appex in Embed App Extensions */,
+				6512696F25AB20BF00C53E46 /* RecoderSetupUI.appex in Embed App Extensions */,
+				6512696B25AB20B900C53E46 /* Recoder.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -65,6 +65,7 @@
 		0E2A237194B7F98983539602 /* Pods-Recoder.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Recoder.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Recoder/Pods-Recoder.debug.xcconfig"; sourceTree = "<group>"; };
 		289A9C4510CD7EA6F4CE9897 /* Pods-LFLiveKitDemo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LFLiveKitDemo.debug.xcconfig"; path = "Pods/Target Support Files/Pods-LFLiveKitDemo/Pods-LFLiveKitDemo.debug.xcconfig"; sourceTree = "<group>"; };
 		5B1CCEEE06FCFAF75D105A51 /* libPods-LFLiveKitDemo.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-LFLiveKitDemo.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6512697E25AB3B6500C53E46 /* req_proto.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = req_proto.h; sourceTree = "<group>"; };
 		655FCB3925A986CF009A5376 /* LKAlert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LKAlert.h; sourceTree = "<group>"; };
 		655FCB3A25A986CF009A5376 /* LKAlert.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LKAlert.m; sourceTree = "<group>"; };
 		655FCB3B25A986CF009A5376 /* LYUDPSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LYUDPSession.m; sourceTree = "<group>"; };
@@ -137,6 +138,7 @@
 			children = (
 				655FCB3825A986CF009A5376 /* Alert */,
 				655FCB5A25A98A54009A5376 /* LYMacro.h */,
+				6512697E25AB3B6500C53E46 /* req_proto.h */,
 				655FCB3F25A986CF009A5376 /* LYUDPSession.h */,
 				655FCB3B25A986CF009A5376 /* LYUDPSession.m */,
 				655FCB3C25A986CF009A5376 /* Reachability */,
@@ -326,17 +328,17 @@
 				TargetAttributes = {
 					7D0A55BF21B8FFE100695148 = {
 						CreatedOnToolsVersion = 10.1;
-						DevelopmentTeam = 4FGXKRHW93;
+						DevelopmentTeam = FFX8BC7K3G;
 						ProvisioningStyle = Automatic;
 					};
 					7D0A55CB21B8FFE100695148 = {
 						CreatedOnToolsVersion = 10.1;
-						DevelopmentTeam = 4FGXKRHW93;
+						DevelopmentTeam = FFX8BC7K3G;
 						ProvisioningStyle = Automatic;
 					};
 					84D8B4251D75778B00752B56 = {
 						CreatedOnToolsVersion = 7.3.1;
-						DevelopmentTeam = 4FGXKRHW93;
+						DevelopmentTeam = FFX8BC7K3G;
 					};
 				};
 			};
@@ -536,14 +538,14 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 4FGXKRHW93;
+				DEVELOPMENT_TEAM = FFX8BC7K3G;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				INFOPLIST_FILE = RecoderSetupUI/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.rl.mobile.RecoderSetupUI;
+				PRODUCT_BUNDLE_IDENTIFIER = com.roy.recoderDemo.RecoderSetupUI;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -570,13 +572,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 4FGXKRHW93;
+				DEVELOPMENT_TEAM = FFX8BC7K3G;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				INFOPLIST_FILE = RecoderSetupUI/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.rl.mobile.RecoderSetupUI;
+				PRODUCT_BUNDLE_IDENTIFIER = com.roy.recoderDemo.RecoderSetupUI;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -604,14 +606,14 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 4FGXKRHW93;
+				DEVELOPMENT_TEAM = FFX8BC7K3G;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				INFOPLIST_FILE = Recoder/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.rl.mobile.Recoder;
+				PRODUCT_BUNDLE_IDENTIFIER = com.roy.recoderDemo.Recoder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -639,13 +641,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 4FGXKRHW93;
+				DEVELOPMENT_TEAM = FFX8BC7K3G;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				INFOPLIST_FILE = Recoder/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.rl.mobile.Recoder;
+				PRODUCT_BUNDLE_IDENTIFIER = com.roy.recoderDemo.Recoder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -741,7 +743,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = LFLiveKitDemo/LFLiveKitDemo.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 4FGXKRHW93;
+				DEVELOPMENT_TEAM = FFX8BC7K3G;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = LFLiveKitDemo/Info.plist;
@@ -749,7 +751,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = com.rl.mobile;
+				PRODUCT_BUNDLE_IDENTIFIER = com.roy.recoderDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -761,7 +763,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = LFLiveKitDemo/LFLiveKitDemo.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 4FGXKRHW93;
+				DEVELOPMENT_TEAM = FFX8BC7K3G;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = LFLiveKitDemo/Info.plist;
@@ -769,7 +771,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = com.rl.mobile;
+				PRODUCT_BUNDLE_IDENTIFIER = com.roy.recoderDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

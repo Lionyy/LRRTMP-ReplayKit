@@ -68,3 +68,7 @@ fastlane/test_output
 iOSInjectionProject/
 
 firim/
+samples/LFLiveKitDemo/LFLiveKitDemo.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+samples/LFLiveKitDemo/LFLiveKitDemo.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+samples/LFLiveKitDemo/LFLiveKitDemo.xcworkspace/contents.xcworkspacedata
+samples/LFLiveKitDemo/LFLiveKitDemo.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist

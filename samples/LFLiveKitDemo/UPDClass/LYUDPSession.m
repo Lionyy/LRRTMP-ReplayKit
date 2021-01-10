@@ -12,17 +12,27 @@
 #import "LKAlert.h"
 #import "YYReachability.h"
 #import "LYMacro.h"
+#import "req_proto.h"
+#import <arpa/inet.h>
 
-uint16_t const kBroadcastUDPPort = 7788;
+NSString * const kBroadcastUDPIP = @"255.255.255.255";
+uint16_t const kBroadcastUDPPort = 20603;
 
 @interface LYUDPSession()<GCDAsyncUdpSocketDelegate>
-
+{
+    ly_search_response_t *_search_response;
+    ly_request_port_response_t *_request_port;
+}
 @property (strong, nonatomic) GCDAsyncUdpSocket * udpSocket;
 
 @property (strong, nonatomic) YYReachability * reachability;
-
+/// 请求到的接音视频数据的IP及端口
 @property (copy  , nonatomic) NSString * ipAddress;
 @property (assign, nonatomic) uint16_t port;
+/// 上传音视频ip及端口
+@property (copy  , nonatomic) NSString * mediaIpAddress;
+@property (assign, nonatomic) uint16_t videoPort;
+@property (assign, nonatomic) uint16_t audioPort;
 
 @end
 
@@ -78,7 +88,13 @@ uint16_t const kBroadcastUDPPort = 7788;
         NSLog(@"绑定UDP端口[%@]失败: %@", @(kBroadcastUDPPort), error);
     }
     
-    [_udpSocket sendData:[@{@"msg":@"广播测试"} mj_JSONData] toHost:@"255.255.255.255" port:kBroadcastUDPPort withTimeout:-1 tag:1000];
+    ly_search_t search;
+    memset(&search, 0, sizeof(ly_search_t));
+    search.magic = LY_SEARCH_CMD;
+    
+    NSData *searchData = [NSData dataWithBytes:&search length:sizeof(ly_search_t)];
+    
+    [_udpSocket sendData:searchData toHost:kBroadcastUDPIP port:kBroadcastUDPPort withTimeout:-1 tag:1000];
     [_udpSocket enableBroadcast:YES error:&error];
     [_udpSocket beginReceiving:&error];
     
@@ -99,6 +115,29 @@ uint16_t const kBroadcastUDPPort = 7788;
                 }
             }];
         }
+    }
+}
+
+- (void)requestMediaServerIPAndPort
+{
+    if (!self.ipAddress || self.port == 0) {
+        return;
+    }
+    
+    NSError *error = nil;
+
+    ly_request_port_t reuqest;
+    memset(&reuqest, 0, sizeof(ly_request_port_t));
+    reuqest.magic = LY_REQ_PORT_CMD;
+    
+    NSData *reuqestData = [NSData dataWithBytes:&reuqest length:sizeof(ly_search_t)];
+    
+    [_udpSocket sendData:reuqestData toHost:self.ipAddress port:self.port withTimeout:-1 tag:1000];
+    [_udpSocket enableBroadcast:NO error:&error];
+    [_udpSocket beginReceiving:&error];
+    
+    if (error) {
+        
     }
 }
 
@@ -123,18 +162,53 @@ uint16_t const kBroadcastUDPPort = 7788;
                                              fromAddress:(NSData *)address
                                        withFilterContext:(nullable id)filterContext
 {
-    NSDictionary *dict = [data mj_JSONObject];
-    self.ipAddress = [GCDAsyncUdpSocket hostFromAddress:address];
-    self.port = [GCDAsyncUdpSocket portFromAddress:address];
+    if (data.length >= sizeof(ly_search_response_t)) {
+        ly_search_response_t searchRespond;
+        memcmp(data.bytes, &searchRespond, sizeof(ly_search_response_t));
+        _search_response = &searchRespond;
+        
+        if (searchRespond.magic == LY_SEARCH_CMD) {
+            // 广播搜索投屏服务的IP及端口响应
+            // TODO: 解析地址及端口逻辑
+            uint32_t ip = searchRespond.addr;
+            struct in_addr addr = *(struct in_addr *)&ip;
+            NSString *ipString = [NSString stringWithFormat: @"%s",inet_ntoa(addr)];
+            
+            self.ipAddress = ipString;// [GCDAsyncUdpSocket hostFromAddress:address];
+            self.port = searchRespond.port;
 
-    NSLog(@"收到来自[%@:%@]的消息: %@", self.ipAddress, @(self.port), dict.mj_JSONString);
+            NSLog(@"收到来自[%@:%@]广播搜索投屏服务的IP及端口响应", self.ipAddress, @(self.port));
 
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (_delegate && [_delegate respondsToSelector:@selector(udpSession:didReceivedServerHost:port:)]) {
-            [_delegate udpSession:self didReceivedServerHost:self.ipAddress port:self.port];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (_delegate && [_delegate respondsToSelector:@selector(udpSession:didReceivedServerHost:port:)]) {
+                    [_delegate udpSession:self didReceivedServerHost:self.ipAddress port:self.port];
+                }
+            });
         }
-    });
+    }
     
+    if (data.length >= sizeof(ly_request_port_response_t)) {
+        ly_request_port_response_t request_port;
+        memcmp(data.bytes, &request_port, sizeof(ly_request_port_response_t));
+        _request_port = &request_port;
+        
+        if (request_port.magic == LY_REQ_PORT_CMD) {
+            // 请求接音视频数据的IP及端口响应
+            
+            uint32_t ip = request_port.addr;
+            struct in_addr addr = *(struct in_addr *)&ip;
+            NSString *ipString = [NSString stringWithFormat: @"%s",inet_ntoa(addr)];
+            self.mediaIpAddress = ipString;
+            self.videoPort = request_port.video_port;
+            self.audioPort = request_port.audio_port;
+
+            NSLog(@"收到来自[%@:%@:%@]接音视频数据的IP及端口响应", self.mediaIpAddress, @(self.videoPort), @(self.audioPort));
+            // TODO: 解析地址及端口逻辑
+            dispatch_async(dispatch_get_main_queue(), ^{
+
+            });
+        }
+    }
 }
 
 @end
