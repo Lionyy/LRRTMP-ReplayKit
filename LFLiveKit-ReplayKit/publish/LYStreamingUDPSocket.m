@@ -254,6 +254,10 @@ static const NSInteger RetryTimesMargin = 3;
 - (void)sendAudio:(LFFrame *)frame {
     
     ly_frame_t frameT;
+    memset(&frameT, 0, sizeof(ly_frame_t));
+    ly_slice_t slice;
+    memset(&slice, 0, sizeof(ly_slice_t));
+
     frameT.magic = _FRAME_MAGIC_;
     frameT.source_id = self.stream.sourceId.longLongValue;
     frameT.stream_id = self.stream.streamId.longLongValue + LY_STREAM_ID_AUDIO;
@@ -264,16 +268,19 @@ static const NSInteger RetryTimesMargin = 3;
     frameT.frame_len = frame.data.length;
     frameT.timestamp = frame.timestamp;
     
-    memset(&frameT, 0, sizeof(ly_frame_t));
-
-    ly_slice_t slice;
     slice.frame = frameT;
-    memset(&slice, 0, sizeof(ly_slice_t));
+
+    NSInteger maxSliceSize = sizeof(slice.slice_dat);
+    [self sendFrame:frame mediaSlice:slice dataLimitedLength:maxSliceSize toUDPPort:self.stream.udpAudioPort];
 }
 
 - (void)sendVideo:(LFVideoFrame *)frame {
     
     ly_frame_t frameT;
+    memset(&frameT, 0, sizeof(ly_frame_t));
+    ly_slice_t slice;
+    memset(&slice, 0, sizeof(ly_slice_t));
+    
     frameT.magic = _FRAME_MAGIC_;
     frameT.source_id = self.stream.sourceId.longLongValue;
     frameT.stream_id = self.stream.streamId.longLongValue + LY_STREAM_ID_VIDEO;
@@ -289,19 +296,47 @@ static const NSInteger RetryTimesMargin = 3;
     frameT.frame_len = frame.data.length;
     frameT.timestamp = frame.timestamp;
     
-    memset(&frameT, 0, sizeof(ly_frame_t));
-
-    ly_slice_t slice;
     slice.frame = frameT;
-    memset(&slice, 0, sizeof(ly_slice_t));
+    
+    NSInteger maxSliceSize = sizeof(slice.slice_dat);
+    [self sendFrame:frame mediaSlice:slice dataLimitedLength:maxSliceSize toUDPPort:self.stream.udpVideoPort];
+}
 
+- (void)sendFrame:(LFFrame *)frame mediaSlice:(ly_slice_t)slice dataLimitedLength:(NSInteger)limitedLength toUDPPort:(int16_t)udpPort {
+
+    slice.slice_cnt = frame.data.length / limitedLength + frame.data.length % limitedLength ? 1 : 0;
+    
+    if(slice.slice_cnt > 1) {
+        NSInteger sliceNum = 0;
+        NSInteger framePos = 0;
+        uint8_t *frameDP = (uint8_t *)frame.data.bytes;
+
+        while (framePos < frame.data.length) {
+            ly_slice_t sliceTmp;
+            memset(&sliceTmp, 0, sizeof(ly_slice_t));
+            
+            sliceTmp.frame = slice.frame;
+            sliceTmp.slice_cnt = slice.slice_cnt;
+            sliceTmp.slice_num = sliceNum;
+            sliceTmp.slice_len = MIN(limitedLength, frame.data.length - framePos);
+            
+            memcpy(&sliceTmp.slice_dat, frameDP + framePos, sliceTmp.slice_len);
+            
+            sliceNum++;
+            framePos += sliceTmp.slice_len;
+            
+            [self sendSlice:sliceTmp toUDPPort:udpPort];
+        }
+    }else {
+        [self sendSlice:slice toUDPPort:udpPort];
+    }
 }
 
 - (void)sendSlice:(ly_slice_t)slice toUDPPort:(int16_t)udpPort {
 
-    
+    NSData *sliceData = [NSData dataWithBytes:&slice length:sizeof(slice)];
+    [_udpSocket sendData:sliceData toHost:self.stream.udpHost port:udpPort withTimeout:-1 tag:101];
 }
-
 
 #pragma mark - GCDAsyncUdpSocketDelegate
 
