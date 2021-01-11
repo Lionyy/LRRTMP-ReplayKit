@@ -9,6 +9,8 @@
 #import <VideoToolbox/VideoToolbox.h>
 #import <AVFoundation/AVFoundation.h>
 
+#define LFUseAnnexBStyle 1
+
 @interface LFHardwareVideoEncoder (){
     VTCompressionSessionRef compressionSession;
     NSInteger frameCount;
@@ -24,7 +26,7 @@
 @property (nonatomic, weak) id<LFVideoEncodingDelegate> encoderDelegate;
 @property (nonatomic) NSInteger currentVideoBitRate;
 @property (nonatomic) BOOL isBackGround;
-
+@property (nonatomic) uint32_t frameNumber;
 @end
 
 @implementation LFHardwareVideoEncoder
@@ -34,6 +36,7 @@
     if (self = [super init]) {
         NSLog(@"USE LFHardwareVideoEncoder");
         _configuration = configuration;
+        _frameNumber = 0;
         if (_configuration.encoderType == LFVideoH265Encoder) {
             if ([[AVAssetExportSession allExportPresets] containsObject:AVAssetExportPresetHEVCHighestQuality] &&
                 VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC)) {
@@ -191,6 +194,7 @@
 }
 
 - (void)stopEncoder {
+    _frameNumber = 0;
     VTCompressionSessionCompleteFrames(compressionSession, kCMTimeIndefinite);
 }
 
@@ -303,11 +307,42 @@ static void VideoCompressonOutputCallback(void *VTref, void *VTFrameRef, OSStatu
 
             LFVideoFrame *videoFrame = [LFVideoFrame new];
             videoFrame.timestamp = timeStamp;
-            videoFrame.data = [[NSData alloc] initWithBytes:(dataPointer + bufferOffset + AVCCHeaderLength) length:NALUnitLength];
+            NSData *rawVideoData = [[NSData alloc] initWithBytes:(dataPointer + bufferOffset + AVCCHeaderLength) length:NALUnitLength];
+#if LFUseAnnexBStyle
+            NSMutableData *frameData = [[NSMutableData alloc] init];
+            uint8_t header[] = {0x00, 0x00, 0x00, 0x01};
+            if (keyframe) {
+                if (videoEncoder->vps) {
+                    [frameData appendBytes:header length:4];
+                    [frameData appendData:videoEncoder->vps];
+                }
+                if (videoEncoder->sps) {
+                    [frameData appendBytes:header length:4];
+                    [frameData appendData:videoEncoder->sps];
+                }
+                if (videoEncoder->pps) {
+                    [frameData appendBytes:header length:4];
+                    [frameData appendData:videoEncoder->pps];
+                }
+                
+                uint8_t header[] = {0x00, 0x00, 0x00, 0x01};
+                [frameData appendBytes:header length:4];
+                [frameData appendData:rawVideoData];
+            } else {
+                uint8_t header[] = {0x00, 0x00, 0x01};
+                [frameData appendBytes:header length:3];
+                [frameData appendData:rawVideoData];
+            }
+            videoFrame.data = frameData;
+#else
+            videoFrame.data = rawVideoData;
+#endif
             videoFrame.isKeyFrame = keyframe;
             videoFrame.vps = videoEncoder->vps;
             videoFrame.sps = videoEncoder->sps;
             videoFrame.pps = videoEncoder->pps;
+            videoFrame.frameNumber = videoEncoder.frameNumber;
+            videoEncoder.frameNumber += 1;
             
             if (videoEncoder.encoderDelegate && [videoEncoder.encoderDelegate respondsToSelector:@selector(videoEncoder:videoFrame:)]) {
                 [videoEncoder.encoderDelegate videoEncoder:videoEncoder videoFrame:videoFrame];

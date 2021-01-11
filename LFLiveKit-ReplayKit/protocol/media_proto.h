@@ -48,15 +48,13 @@ typedef struct ly_video_t {
     uint32_t    crop_h;
 } ly_video_t;
 
-typedef struct ly_audio_t
-{
+typedef struct ly_audio_t {
     uint16_t    sample_frequency;
     uint16_t    bit_per_sample;
     uint16_t    num_channels;
 } ly_audio_t;
 
-typedef struct ly_stream_t
-{
+typedef struct ly_stream_t {
     uint64_t   steam_id;
     uint8_t    codec; // codec_id
     uint8_t    type;  // stream type
@@ -64,16 +62,14 @@ typedef struct ly_stream_t
     ly_audio_t audio;
 } ly_stream_t;
 
-typedef struct ly_output_t
-{
+typedef struct ly_output_t {
     uint32_t    addr;
     uint16_t    port;
 } ly_output_t;
 
 #define _FRAME_MAGIC_ (0x66668888)
 
-typedef struct ly_frame_t
-{
+typedef struct ly_frame_t {
     uint32_t    magic;  // _FRAME_MAGIC_
     uint64_t    source_id;
     uint64_t    stream_id;
@@ -87,8 +83,7 @@ typedef struct ly_frame_t
     uint64_t    timestamp;
 } ly_frame_t;
 
-typedef struct ly_slice_t
-{
+typedef struct ly_slice_t {
     ly_frame_t  frame;
     uint16_t    slice_cnt;
     uint16_t    slice_num;
@@ -99,8 +94,7 @@ typedef struct ly_slice_t
 #define _PROTO_CMD_MAGIC_ (0x55557777)
 #define _REQUEST_STREAM_  (1)
 
-typedef struct ly_proto_cmd_t
-{
+typedef struct ly_proto_cmd_t {
     uint32_t    magic; // _PROTO_CMD_MAGIC_
     uint16_t    cmd_id;
     uint8_t     reserved[4];

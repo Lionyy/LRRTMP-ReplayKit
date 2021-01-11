@@ -119,6 +119,7 @@ static const NSInteger RetryTimesMargin = 3;
 }
 
 #pragma mark - CustomMethod
+
 - (void)sendFrame {
     __weak typeof(self) _self = self;
      dispatch_async(self.udpSendQueue, ^{
@@ -133,7 +134,9 @@ static const NSInteger RetryTimesMargin = 3;
             // 调用发送接口
             LFFrame *frame = [_self.buffer popFirstObject];
             if ([frame isKindOfClass:[LFVideoFrame class]]) {
-                if (!_self.sendVideoHead) {
+                /*
+                 * flv格式
+                 if (!_self.sendVideoHead) {
                     _self.sendVideoHead = YES;
                     if(!((LFVideoFrame*)frame).sps || !((LFVideoFrame*)frame).pps){
                         _self.isSending = NO;
@@ -143,7 +146,13 @@ static const NSInteger RetryTimesMargin = 3;
                 } else {
                     [_self sendVideo:(LFVideoFrame *)frame];
                 }
+                */
+                
+                [_self sendVideo:(LFVideoFrame *)frame];
+
             } else {
+                /*
+                 * flv格式
                 if (!_self.sendAudioHead) {
                     _self.sendAudioHead = YES;
                     if(!((LFAudioFrame*)frame).audioInfo){
@@ -154,6 +163,9 @@ static const NSInteger RetryTimesMargin = 3;
                 } else {
                     [_self sendAudio:frame];
                 }
+                */
+                
+                [_self sendAudio:frame];
             }
 
             // debug更新
@@ -205,10 +217,9 @@ static const NSInteger RetryTimesMargin = 3;
     self.retryTimes4netWorkBreaken = 0;
 }
 
-- (NSInteger)startUDPSocket {
+- (void)startUDPSocket {
     //由于摄像头的timestamp是一直在累加，需要每次得到相对时间戳
     //分配与初始化
-    
     NSError *error = nil;
     
     if (!_udpSocket) {
@@ -227,7 +238,6 @@ static const NSInteger RetryTimesMargin = 3;
     [_udpSocket beginReceiving:&error];
     
     if (error) {
-//        goto Failed;
         NSLog(@"beginReceiving失败: %@", error);
     }
     
@@ -235,158 +245,63 @@ static const NSInteger RetryTimesMargin = 3;
         [self.delegate socketStatus:self status:LFLiveStart];
     }
 
-    [self sendMetaData];
-
     _serverReady = YES;
     _isSending = NO;
-    return 0;
-
-//Failed:
-//    if (_udpSocket != nil) {
-//        [_udpSocket close];
-//        _udpSocket = nil;
-//    }
-//    [self reconnect];
-//    return -1;
 }
 
 #pragma mark - UDP Send
 
-- (void)sendMetaData {
+- (void)sendAudio:(LFFrame *)frame {
+    
+    ly_frame_t frameT;
+    frameT.magic = _FRAME_MAGIC_;
+    frameT.source_id = self.stream.sourceId.longLongValue;
+    frameT.stream_id = self.stream.streamId.longLongValue + LY_STREAM_ID_AUDIO;
+    frameT.media_type = LY_STREAM_TYPE_AUDIO;
+    frameT.codec = LY_CODEC_ID_AAC;
+    frameT.audio = [self _audioInfo];
+    frameT.frame_num = frame.frameNumber;
+    frameT.frame_len = frame.data.length;
+    frameT.timestamp = frame.timestamp;
+    
+    memset(&frameT, 0, sizeof(ly_frame_t));
 
-}
-
-- (void)sendVideoHeader:(LFVideoFrame *)videoFrame {
- 
-    if (videoFrame.vps) {
-        [self sendVideoHEVCHeader:videoFrame];
-    }else {
-        [self sendVideoH264Header:videoFrame];
-    }
-}
-
-- (void)sendVideoH264Header:(LFVideoFrame *)videoFrame {
-
-}
-
-- (void)sendVideoHEVCHeader:(LFVideoFrame *)videoFrame {
-
+    ly_slice_t slice;
+    slice.frame = frameT;
+    memset(&slice, 0, sizeof(ly_slice_t));
 }
 
 - (void)sendVideo:(LFVideoFrame *)frame {
+    
+    ly_frame_t frameT;
+    frameT.magic = _FRAME_MAGIC_;
+    frameT.source_id = self.stream.sourceId.longLongValue;
+    frameT.stream_id = self.stream.streamId.longLongValue + LY_STREAM_ID_VIDEO;
+    frameT.media_type = LY_STREAM_TYPE_VIDEO;
+    if (self.stream.videoConfiguration.encoderType == LFVideoH264Encoder) {
+        frameT.codec = LY_CODEC_ID_H264;
+    } else {
+        frameT.codec = LY_CODEC_ID_H265;
+    }
+    frameT.video = [self _videoInfo];
+    frameT.frame_type = frame.isKeyFrame ? 1 : 2;
+    frameT.frame_num = frame.frameNumber;
+    frameT.frame_len = frame.data.length;
+    frameT.timestamp = frame.timestamp;
+    
+    memset(&frameT, 0, sizeof(ly_frame_t));
 
-//    NSInteger i = 0;
-//    NSInteger rtmpLength = frame.data.length + 9;
-//    unsigned char *body = (unsigned char *)malloc(rtmpLength);
-//    memset(body, 0, rtmpLength);
-//
-//    if (frame.vps) {
-//        if (frame.isKeyFrame) {
-//            body[i++] = 0x1C;        // 1:Iframe  12:HEVC
-//        }else {
-//            body[i++] = 0x2C;        // 2:Pframe  12:HEVC
-//        }
-//    } else {
-//        if (frame.isKeyFrame) {
-//            body[i++] = 0x17;        // 1:Pframe  7:AVC
-//        }else {
-//            body[i++] = 0x27;        // 2:Pframe  7:AVC
-//        }
-//    }
-//    body[i++] = 0x01;    // NALU
-//    body[i++] = 0x00;
-//    body[i++] = 0x00;
-//    body[i++] = 0x00;
-//    body[i++] = (frame.data.length >> 24) & 0xff;
-//    body[i++] = (frame.data.length >> 16) & 0xff;
-//    body[i++] = (frame.data.length >>  8) & 0xff;
-//    body[i++] = (frame.data.length) & 0xff;
-//    memcpy(&body[i], frame.data.bytes, frame.data.length);
-//
-//    [self sendPacket:RTMP_PACKET_TYPE_VIDEO data:body size:(rtmpLength) nTimestamp:frame.timestamp];
-//    free(body);
+    ly_slice_t slice;
+    slice.frame = frameT;
+    memset(&slice, 0, sizeof(ly_slice_t));
+
 }
 
-- (NSInteger)sendPacket:(unsigned int)nPacketType data:(unsigned char *)data size:(NSInteger)size nTimestamp:(uint64_t)nTimestamp {
+- (void)sendSlice:(ly_slice_t)slice toUDPPort:(int16_t)udpPort {
 
-    return 0;
+    
 }
 
-- (void)sendAudioHeader:(LFAudioFrame *)audioFrame {
-
-//    NSInteger rtmpLength = audioFrame.audioInfo.length + 2;     /*spec data长度,一般是2*/
-//    unsigned char *body = (unsigned char *)malloc(rtmpLength);
-//    memset(body, 0, rtmpLength);
-//
-//    /*AF 00 + AAC RAW data*/
-//    body[0] = 0xAF;
-//    body[1] = 0x00;
-//    memcpy(&body[2], audioFrame.audioInfo.bytes, audioFrame.audioInfo.length);          /*spec_buf是AAC sequence header数据*/
-//    [self sendPacket:RTMP_PACKET_TYPE_AUDIO data:body size:rtmpLength nTimestamp:0];
-//    free(body);
-}
-
-- (void)sendAudio:(LFFrame *)frame {
-
-//    NSInteger rtmpLength = frame.data.length + 2;    /*spec data长度,一般是2*/
-//    unsigned char *body = (unsigned char *)malloc(rtmpLength);
-//    memset(body, 0, rtmpLength);
-//
-//    /*AF 01 + AAC RAW data*/
-//    body[0] = 0xAF;
-//    body[1] = 0x01;
-//    memcpy(&body[2], frame.data.bytes, frame.data.length);
-//    [self sendPacket:RTMP_PACKET_TYPE_AUDIO data:body size:rtmpLength nTimestamp:frame.timestamp];
-//    free(body);
-}
-
-// 断线重连
-//- (void)reconnect {
-//    dispatch_async(self.udpSendQueue, ^{
-//        if (self.retryTimes4netWorkBreaken++ < self.reconnectCount && !self.isReconnecting) {
-//            self.isConnected = NO;
-//            self.isConnecting = NO;
-//            self.isReconnecting = YES;
-//            dispatch_async(dispatch_get_main_queue(), ^{
-//                 [self performSelector:@selector(_reconnect) withObject:nil afterDelay:self.reconnectInterval];
-//            });
-//
-//        } else if (self.retryTimes4netWorkBreaken >= self.reconnectCount) {
-//            if (self.delegate && [self.delegate respondsToSelector:@selector(socketStatus:status:)]) {
-//                [self.delegate socketStatus:self status:LFLiveError];
-//            }
-//            if (self.delegate && [self.delegate respondsToSelector:@selector(socketDidError:errorCode:)]) {
-//                [self.delegate socketDidError:self errorCode:LFLiveSocketError_ReConnectTimeOut];
-//            }
-//        }
-//    });
-//}
-//
-//- (void)_reconnect {
-//    [NSObject cancelPreviousPerformRequestsWithTarget:self];
-//
-//    _isReconnecting = NO;
-//    if(_isConnected) return;
-//
-//    _isReconnecting = NO;
-//    if (_isConnected) return;
-//    if (_udpSocket != nil) {
-//        [_udpSocket close];
-//        _udpSocket = nil;
-//    }
-//    _sendAudioHead = NO;
-//    _sendVideoHead = NO;
-//
-//    if (self.delegate && [self.delegate respondsToSelector:@selector(socketStatus:status:)]) {
-//        [self.delegate socketStatus:self status:LFLiveRefresh];
-//    }
-//
-//    if (_udpSocket != nil) {
-//        [_udpSocket close];
-//        _udpSocket = nil;
-//    }
-//    [self startUDPSocket];
-//}
 
 #pragma mark - GCDAsyncUdpSocketDelegate
 
@@ -462,6 +377,23 @@ static const NSInteger RetryTimesMargin = 3;
         _udpSendQueue = dispatch_queue_create("com.vison.shareScreen.RtmpSendQueue", NULL);
     }
     return _udpSendQueue;
+}
+
+- (ly_video_t)_videoInfo {
+    ly_video_t videoT;
+    memset(&videoT, 0, sizeof(ly_video_t));
+    videoT.width = self.stream.videoConfiguration.videoSize.width;
+    videoT.height = self.stream.videoConfiguration.videoSize.height;
+    return videoT;
+}
+
+- (ly_audio_t)_audioInfo {
+    ly_audio_t audioT;
+    memset(&audioT, 0, sizeof(ly_audio_t));
+    audioT.bit_per_sample = 16;
+    audioT.sample_frequency = self.stream.audioConfiguration.audioSampleRate;
+    audioT.num_channels = self.stream.audioConfiguration.numberOfChannels;
+    return audioT;
 }
 
 @end

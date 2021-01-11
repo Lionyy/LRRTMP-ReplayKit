@@ -20,7 +20,7 @@
 }
 @property (nonatomic, strong) LFLiveAudioConfiguration *configuration;
 @property (nonatomic, weak) id<LFAudioEncodingDelegate> aacDeleage;
-
+@property (nonatomic) uint32_t frameNumber;
 @end
 
 @implementation LFHardwareAudioEncoder
@@ -29,7 +29,7 @@
     if (self = [super init]) {
         NSLog(@"USE LFHardwareAudioEncoder");
         _configuration = configuration;
-        
+        _frameNumber = 0;
         if (!leftBuf) {
             leftBuf = malloc(_configuration.bufferLength);
         }
@@ -116,7 +116,7 @@
     LFAudioFrame *audioFrame = [LFAudioFrame new];
     audioFrame.timestamp = timeStamp;
     
-#ifdef LFUseAACADTSHeader
+#if LFUseAACADTSHeader
     NSData *rawData = [NSData dataWithBytes:aacBuf length:outBufferList.mBuffers[0].mDataByteSize];
     NSData *adtsData = [self adtsData:_configuration.numberOfChannels rawDataLength:rawData.length];
     NSMutableData *audioData = [NSMutableData dataWithData:adtsData];
@@ -130,6 +130,9 @@
     exeData[0] = _configuration.asc[0];
     exeData[1] = _configuration.asc[1];
     audioFrame.audioInfo = [NSData dataWithBytes:exeData length:2];
+    audioFrame.frameNumber = _frameNumber;
+    _frameNumber += 1;
+    
     if (self.aacDeleage && [self.aacDeleage respondsToSelector:@selector(audioEncoder:audioFrame:)]) {
         [self.aacDeleage audioEncoder:self audioFrame:audioFrame];
     }
@@ -142,7 +145,7 @@
 }
 
 - (void)stopEncoder {
-    
+    _frameNumber = 0;
 }
 
 #pragma mark -- CustomMethod

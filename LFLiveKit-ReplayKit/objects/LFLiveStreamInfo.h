@@ -36,6 +36,7 @@ typedef NS_ENUM (NSUInteger, LFLiveSocketErrorCode) {
 
 @interface LFLiveStreamInfo : NSObject
 
+@property (nonatomic, copy) NSString *sourceId;
 @property (nonatomic, copy) NSString *streamId;
 
 #pragma mark -- FLV
