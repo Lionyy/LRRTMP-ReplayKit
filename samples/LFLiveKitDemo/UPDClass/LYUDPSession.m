@@ -26,6 +26,8 @@ NSInteger const kSendRequestMediaServerTag = 0xe2;
     ly_request_port_response_t *_request_port;
 }
 @property (strong, nonatomic) GCDAsyncUdpSocket * udpSocket;
+@property (strong, nonatomic) LFLiveAudioConfiguration *audioConfiguration;
+@property (strong, nonatomic) LFLiveVideoConfiguration *videoConfiguration;
 
 @property (strong, nonatomic) YYReachability * reachability;
 /// 请求到的接音视频数据的IP及端口
@@ -42,10 +44,13 @@ NSInteger const kSendRequestMediaServerTag = 0xe2;
 
 @implementation LYUDPSession
 
-- (instancetype)init
+- (instancetype)initWithAudioConfiguration:(LFLiveAudioConfiguration *)audioConfiguration
+                        videoConfiguration:(LFLiveVideoConfiguration *)videoConfiguration
 {
-    self = [super init];
-    if (self) {
+    if (self = [super init]) {
+        _audioConfiguration = audioConfiguration;
+        _videoConfiguration = videoConfiguration;
+
         [self initReachability];
         [self initUdpSocket];
     }
@@ -123,13 +128,21 @@ NSInteger const kSendRequestMediaServerTag = 0xe2;
     NSError *error = nil;
     _needRequest = NO;
     
-    ly_request_port_t reuqest;
-    memset(&reuqest, 0, sizeof(ly_request_port_t));
-    reuqest.magic = LY_REQ_PORT_CMD;
+    ly_request_port_t request;
+    memset(&request, 0, sizeof(ly_request_port_t));
+    request.magic = LY_REQ_PORT_CMD;
+    request.width = _videoConfiguration.videoSize.width;
+    request.height = _videoConfiguration.videoSize.height;
+    request.video_fps = _videoConfiguration.videoFrameRate;
+    request.sample_frequency = _audioConfiguration.audioSampleRate;
+    request.bit_per_sample = 16;
+    request.num_channels = _audioConfiguration.numberOfChannels;
+    request.audio_fps = _audioConfiguration.audioSampleRate / 1024;
+    memcpy(request.name, UIDevice.currentDevice.name.UTF8String, sizeof(request.name));
     
-    NSData *reuqestData = [NSData dataWithBytes:&reuqest length:sizeof(ly_search_t)];
+    NSData *requestData = [NSData dataWithBytes:&request length:sizeof(request)];
     
-    [_udpSocket sendData:reuqestData toHost:self.ipAddress port:self.port withTimeout:-1 tag:kSendRequestMediaServerTag];
+    [_udpSocket sendData:requestData toHost:self.ipAddress port:self.port withTimeout:-1 tag:kSendRequestMediaServerTag];
     [_udpSocket enableBroadcast:NO error:&error];
     [_udpSocket beginReceiving:&error];
     

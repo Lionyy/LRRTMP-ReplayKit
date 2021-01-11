@@ -7,6 +7,8 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <LFLiveKit-ReplayKit/LFLiveAudioConfiguration.h>
+#import <LFLiveKit-ReplayKit/LFLiveVideoConfiguration.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -36,6 +38,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (assign, nonatomic, readonly) uint16_t audioPort;
 /// 视频UPD推流端口号
 @property (assign, nonatomic, readonly) uint16_t videoPort;
+/// 音频编码配置信息
+@property (strong, nonatomic, readonly) LFLiveAudioConfiguration *audioConfiguration;
+/// 视频编码配置信息
+@property (strong, nonatomic, readonly) LFLiveVideoConfiguration *videoConfiguration;
+
+- (nullable instancetype)initWithAudioConfiguration:(nullable LFLiveAudioConfiguration *)audioConfiguration
+                                 videoConfiguration:(nullable LFLiveVideoConfiguration *)videoConfiguration;
 
 /// UDP广播获取命令服务器ip地址、端口号
 - (void)searchServerAddress;

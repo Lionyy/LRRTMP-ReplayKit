@@ -98,7 +98,14 @@
     [self.view addSubview:statrButton1];
     [self.view addSubview:statrButton2];
     
-    _udpSession = [[LYUDPSession alloc] init];
+    LFLiveAudioConfiguration *audioConfiguration = [LFLiveAudioConfiguration defaultConfigurationForQuality:LFLiveAudioQuality_High];
+    audioConfiguration.numberOfChannels = 1;
+    LFLiveVideoConfiguration *videoConfiguration = [LFLiveVideoConfiguration defaultConfigurationForQuality:LFLiveVideoQuality_High4
+                                                                                     outputImageOrientation:UIInterfaceOrientationLandscapeRight];
+    videoConfiguration.videoSize = CGSizeMake(1920, (NSInteger)(UIScreen.mainScreen.bounds.size.height/UIScreen.mainScreen.bounds.size.width * 1920));
+    videoConfiguration.encoderType = LFVideoH265Encoder;
+    
+    _udpSession = [[LYUDPSession alloc] initWithAudioConfiguration:audioConfiguration videoConfiguration:videoConfiguration];
     _udpSession.delegate = self;
 }
 
@@ -112,16 +119,9 @@
 #pragma mark -- Getter Setter
 - (LFLiveSession *)session {
     if (_session == nil) {
-        
-        LFLiveAudioConfiguration *audioConfiguration = [LFLiveAudioConfiguration defaultConfigurationForQuality:LFLiveAudioQuality_High];
-        audioConfiguration.numberOfChannels = 1;
-        LFLiveVideoConfiguration *videoConfiguration;
-        
-        videoConfiguration = [LFLiveVideoConfiguration defaultConfigurationForQuality:LFLiveVideoQuality_High4 outputImageOrientation:UIInterfaceOrientationLandscapeRight];
-        videoConfiguration.videoSize = CGSizeMake(1920, (NSInteger)(UIScreen.mainScreen.bounds.size.height/UIScreen.mainScreen.bounds.size.width * 1920));
-        videoConfiguration.encoderType = LFVideoH265Encoder;
-        
-        _session = [[LFLiveSession alloc] initWithAudioConfiguration:audioConfiguration videoConfiguration:videoConfiguration captureType:LFLiveInputMaskAll];
+        _session = [[LFLiveSession alloc] initWithAudioConfiguration:_udpSession.audioConfiguration
+                                                  videoConfiguration:_udpSession.videoConfiguration
+                                                         captureType:LFLiveInputMaskAll];
         
         _session.delegate = self;
         _session.showDebugInfo = YES;
