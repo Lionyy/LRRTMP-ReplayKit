@@ -219,8 +219,6 @@ NSInteger const kMaxKeepaliveTimeInterval = 5;
 }
 
 - (void)startUDPSocket {
-    //由于摄像头的timestamp是一直在累加，需要每次得到相对时间戳
-    //分配与初始化
     NSError *error = nil;
     
     if (!_udpSocket) {
