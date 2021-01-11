@@ -9,6 +9,7 @@
 #import <GCDAsyncUdpSocket.h>
 #import "media_proto.h"
 
+uint16_t const kLocalUDPPort = 20605;
 static const NSInteger RetryTimesBreaken = 5;  ///<  重连1分钟  3秒一次 一共20次
 static const NSInteger RetryTimesMargin = 3;
 
@@ -25,12 +26,11 @@ static const NSInteger RetryTimesMargin = 3;
 @property (nonatomic, assign) NSInteger reconnectCount;
 
 @property (atomic, assign) BOOL isSending;
-@property (nonatomic, assign) BOOL isConnected;
-@property (nonatomic, assign) BOOL isConnecting;
-@property (nonatomic, assign) BOOL isReconnecting;
 
 @property (nonatomic, assign) BOOL sendVideoHead;
 @property (nonatomic, assign) BOOL sendAudioHead;
+
+@property (nonatomic, assign) BOOL serverReady;
 
 @end
 
@@ -69,14 +69,11 @@ static const NSInteger RetryTimesMargin = 3;
 
 - (void)_start {
     if (!_stream) return;
-    if (_isConnecting) return;
     if (_udpSocket != NULL) return;
     self.debugInfo.streamId = self.stream.streamId;
     self.debugInfo.uploadUrl = self.stream.url;
     self.debugInfo.isRtmp = YES;
-    if (_isConnecting) return;
     
-    _isConnecting = YES;
     if (self.delegate && [self.delegate respondsToSelector:@selector(socketStatus:status:)]) {
         [self.delegate socketStatus:self status:LFLivePending];
     }
@@ -85,7 +82,7 @@ static const NSInteger RetryTimesMargin = 3;
         [_udpSocket close];
         _udpSocket = nil;
     }
-    [self connectUDPServer];
+    [self startUDPSocket];
 }
 
 - (void)stop {
@@ -128,7 +125,7 @@ static const NSInteger RetryTimesMargin = 3;
         if (!_self.isSending && _self.buffer.list.count > 0) {
             _self.isSending = YES;
 
-            if (!_self.isConnected || _self.isReconnecting || _self.isConnecting || !_self.udpSocket){
+            if (!_self.serverReady || !_self.udpSocket){
                 _self.isSending = NO;
                 return;
             }
@@ -199,27 +196,39 @@ static const NSInteger RetryTimesMargin = 3;
 }
 
 - (void)clean {
-    _isConnecting = NO;
-    _isReconnecting = NO;
     _isSending = NO;
-    _isConnected = NO;
     _sendAudioHead = NO;
     _sendVideoHead = NO;
+    _serverReady = NO;
     self.debugInfo = nil;
     [self.buffer removeAllObject];
     self.retryTimes4netWorkBreaken = 0;
 }
 
-- (NSInteger)connectUDPServer {
+- (NSInteger)startUDPSocket {
     //由于摄像头的timestamp是一直在累加，需要每次得到相对时间戳
     //分配与初始化
     
     NSError *error = nil;
     
-    _udpSocket = [[GCDAsyncUdpSocket alloc] initWithDelegate:self delegateQueue:self.udpSendQueue socketQueue:self.udpSendQueue];
-    [_udpSocket connectToHost:self.stream.host onPort:self.stream.port error:&error];
+    if (!_udpSocket) {
+        _udpSocket = [[GCDAsyncUdpSocket alloc] initWithDelegate:self delegateQueue:self.udpSendQueue socketQueue:self.udpSendQueue];
+        [_udpSocket setIPv4Enabled:YES];
+        [_udpSocket setIPv6Enabled:YES];
+        [_udpSocket enableBroadcast:NO error:&error];
+    }
+
+    [_udpSocket bindToPort:kLocalUDPPort error:&error];
+    if(error) {
+        NSLog(@"绑定UDP端口[%@]失败: %@", @(kLocalUDPPort), error);
+    }
+    
+    error = nil;
+    [_udpSocket beginReceiving:&error];
+    
     if (error) {
-        goto Failed;
+//        goto Failed;
+        NSLog(@"beginReceiving失败: %@", error);
     }
     
     if (self.delegate && [self.delegate respondsToSelector:@selector(socketStatus:status:)]) {
@@ -228,19 +237,17 @@ static const NSInteger RetryTimesMargin = 3;
 
     [self sendMetaData];
 
-    _isConnected = YES;
-    _isConnecting = NO;
-    _isReconnecting = NO;
+    _serverReady = YES;
     _isSending = NO;
     return 0;
 
-Failed:
-    if (_udpSocket != nil) {
-        [_udpSocket close];
-        _udpSocket = nil;
-    }
-    [self reconnect];
-    return -1;
+//Failed:
+//    if (_udpSocket != nil) {
+//        [_udpSocket close];
+//        _udpSocket = nil;
+//    }
+//    [self reconnect];
+//    return -1;
 }
 
 #pragma mark - UDP Send
@@ -334,60 +341,60 @@ Failed:
 }
 
 // 断线重连
-- (void)reconnect {
-    dispatch_async(self.udpSendQueue, ^{
-        if (self.retryTimes4netWorkBreaken++ < self.reconnectCount && !self.isReconnecting) {
-            self.isConnected = NO;
-            self.isConnecting = NO;
-            self.isReconnecting = YES;
-            dispatch_async(dispatch_get_main_queue(), ^{
-                 [self performSelector:@selector(_reconnect) withObject:nil afterDelay:self.reconnectInterval];
-            });
-           
-        } else if (self.retryTimes4netWorkBreaken >= self.reconnectCount) {
-            if (self.delegate && [self.delegate respondsToSelector:@selector(socketStatus:status:)]) {
-                [self.delegate socketStatus:self status:LFLiveError];
-            }
-            if (self.delegate && [self.delegate respondsToSelector:@selector(socketDidError:errorCode:)]) {
-                [self.delegate socketDidError:self errorCode:LFLiveSocketError_ReConnectTimeOut];
-            }
-        }
-    });
-}
-
-- (void)_reconnect {
-    [NSObject cancelPreviousPerformRequestsWithTarget:self];
-    
-    _isReconnecting = NO;
-    if(_isConnected) return;
-    
-    _isReconnecting = NO;
-    if (_isConnected) return;
-    if (_udpSocket != nil) {
-        [_udpSocket close];
-        _udpSocket = nil;
-    }
-    _sendAudioHead = NO;
-    _sendVideoHead = NO;
-    
-    if (self.delegate && [self.delegate respondsToSelector:@selector(socketStatus:status:)]) {
-        [self.delegate socketStatus:self status:LFLiveRefresh];
-    }
-    
-    if (_udpSocket != nil) {
-        [_udpSocket close];
-        _udpSocket = nil;
-    }
-    [self connectUDPServer];
-}
+//- (void)reconnect {
+//    dispatch_async(self.udpSendQueue, ^{
+//        if (self.retryTimes4netWorkBreaken++ < self.reconnectCount && !self.isReconnecting) {
+//            self.isConnected = NO;
+//            self.isConnecting = NO;
+//            self.isReconnecting = YES;
+//            dispatch_async(dispatch_get_main_queue(), ^{
+//                 [self performSelector:@selector(_reconnect) withObject:nil afterDelay:self.reconnectInterval];
+//            });
+//
+//        } else if (self.retryTimes4netWorkBreaken >= self.reconnectCount) {
+//            if (self.delegate && [self.delegate respondsToSelector:@selector(socketStatus:status:)]) {
+//                [self.delegate socketStatus:self status:LFLiveError];
+//            }
+//            if (self.delegate && [self.delegate respondsToSelector:@selector(socketDidError:errorCode:)]) {
+//                [self.delegate socketDidError:self errorCode:LFLiveSocketError_ReConnectTimeOut];
+//            }
+//        }
+//    });
+//}
+//
+//- (void)_reconnect {
+//    [NSObject cancelPreviousPerformRequestsWithTarget:self];
+//
+//    _isReconnecting = NO;
+//    if(_isConnected) return;
+//
+//    _isReconnecting = NO;
+//    if (_isConnected) return;
+//    if (_udpSocket != nil) {
+//        [_udpSocket close];
+//        _udpSocket = nil;
+//    }
+//    _sendAudioHead = NO;
+//    _sendVideoHead = NO;
+//
+//    if (self.delegate && [self.delegate respondsToSelector:@selector(socketStatus:status:)]) {
+//        [self.delegate socketStatus:self status:LFLiveRefresh];
+//    }
+//
+//    if (_udpSocket != nil) {
+//        [_udpSocket close];
+//        _udpSocket = nil;
+//    }
+//    [self startUDPSocket];
+//}
 
 #pragma mark - GCDAsyncUdpSocketDelegate
 
 - (void)udpSocket:(GCDAsyncUdpSocket *)sock didNotConnect:(NSError * _Nullable)error
 {
-    if (error) {
-        [self reconnect];
-    }
+//    if (error) {
+//        [self reconnect];
+//    }
 }
 
 - (void)udpSocket:(GCDAsyncUdpSocket *)sock didNotSendDataWithTag:(long)tag dueToError:(NSError * _Nullable)error

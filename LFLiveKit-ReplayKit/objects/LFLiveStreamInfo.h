@@ -10,8 +10,6 @@
 #import "LFLiveAudioConfiguration.h"
 #import "LFLiveVideoConfiguration.h"
 
-
-
 /// 流状态
 typedef NS_ENUM (NSUInteger, LFLiveState){
     /// 准备
@@ -45,6 +43,11 @@ typedef NS_ENUM (NSUInteger, LFLiveSocketErrorCode) {
 @property (nonatomic, assign) NSInteger port;
 #pragma mark -- RTMP
 @property (nonatomic, copy) NSString *url;          ///< 上传地址 (RTMP用就好了)
+#pragma mark -- UDP Custom
+@property (nonatomic, copy) NSString *udpHost;
+@property (nonatomic, assign) NSInteger udpAudioPort;
+@property (nonatomic, assign) NSInteger udpVideoPort;
+
 ///音频配置
 @property (nonatomic, strong) LFLiveAudioConfiguration *audioConfiguration;
 ///视频配置

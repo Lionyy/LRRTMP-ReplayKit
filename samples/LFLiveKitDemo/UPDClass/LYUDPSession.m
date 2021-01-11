@@ -65,6 +65,13 @@ uint16_t const kBroadcastUDPPort = 20603;
     _udpSocket = [[GCDAsyncUdpSocket alloc] initWithDelegate:self delegateQueue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)];
     [_udpSocket setIPv4Enabled:YES];
     [_udpSocket setIPv6Enabled:YES];
+    
+    NSError *error = nil;
+    [_udpSocket enableBroadcast:YES error:&error];
+    
+    if(error) {
+        NSLog(@"enableBroadcast 失败: %@", error);
+    }
 }
 
 #pragma mark - UDP Socket
@@ -94,9 +101,8 @@ uint16_t const kBroadcastUDPPort = 20603;
     NSData *searchData = [NSData dataWithBytes:&search length:sizeof(ly_search_t)];
     
     [_udpSocket sendData:searchData toHost:kBroadcastUDPIP port:kBroadcastUDPPort withTimeout:-1 tag:1000];
-    [_udpSocket enableBroadcast:YES error:&error];
     [_udpSocket beginReceiving:&error];
-    
+
     if (error) {
         NSLog(@"广播搜索投屏服务的IP及端口发送失败: %@", error);
         
