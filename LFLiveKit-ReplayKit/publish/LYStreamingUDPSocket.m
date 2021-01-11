@@ -225,7 +225,6 @@ NSInteger const kMaxKeepaliveTimeInterval = 5;
         _udpSocket = [[GCDAsyncUdpSocket alloc] initWithDelegate:self delegateQueue:self.udpSendQueue socketQueue:self.udpSendQueue];
         [_udpSocket setIPv4Enabled:YES];
         [_udpSocket setIPv6Enabled:YES];
-        [_udpSocket enableBroadcast:NO error:&error];
     }
 
     [_udpSocket bindToPort:kLocalUDPPort error:&error];

@@ -43,7 +43,7 @@
             [self.tool sendVideoBuffer:sampleBuffer];
             break;
         case RPSampleBufferTypeAudioApp:
-            //            [self.tool sendAudioBuffer:sampleBuffer];
+//            [self.tool sendAudioBuffer:sampleBuffer];
             break;
         case RPSampleBufferTypeAudioMic:
             [self.tool sendAudioBuffer:sampleBuffer];

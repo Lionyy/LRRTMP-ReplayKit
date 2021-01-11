@@ -61,10 +61,7 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
 - (void)lf {
     LFLiveStreamInfo *stream = [LFLiveStreamInfo new];
     stream.url = _url;
-//    stream.videoConfiguration = [LFLiveVideoConfiguration defaultConfigurationForQuality:LFLiveVideoQuality_High3 outputImageOrientation:UIInterfaceOrientationLandscapeRight];
-//    stream.audioConfiguration = [LFLiveAudioConfiguration defaultConfigurationForQuality:LFLiveAudioQuality_Medium];
-//    stream.videoConfiguration.videoSize = CGSizeMake(UIScreen.mainScreen.bounds.size.height, UIScreen.mainScreen.bounds.size.width);
-    
+
     [self.session startLive:stream];
 }
 
@@ -108,7 +105,7 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
 #pragma mark -- LFStreamingSessionDelegate
 /** live status changed will callback */
 - (void)liveSession:(nullable LFLiveSession *)session liveStateDidChange:(LFLiveState)state {
-//    NSLog(@"liveStateDidChange: %ld", state);
+    NSLog(@"liveStateDidChange: %ld", state);
     switch (state) {
         case LFLiveReady:
             NSLog(@"未连接");
@@ -132,12 +129,13 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
 
 /** live debug info callback */
 - (void)liveSession:(nullable LFLiveSession *)session debugInfo:(nullable LFLiveDebug *)debugInfo {
-//    NSString *speed = formatedSpeed(debugInfo.currentBandwidth, debugInfo.elapsedMilli);
+    NSString *speed = formatedSpeed(debugInfo.currentBandwidth, debugInfo.elapsedMilli);
+    NSLog(@"speed:%@", speed);
     
 }
 /** callback socket errorcode */
 - (void)liveSession:(nullable LFLiveSession *)session errorCode:(LFLiveSocketErrorCode)errorCode {
-    NSLog(@"errorCode: %ld", errorCode);
+    NSLog(@"errorCode: %lu", (unsigned long)errorCode);
 }
 
 
