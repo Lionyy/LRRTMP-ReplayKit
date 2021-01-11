@@ -62,11 +62,6 @@ typedef struct ly_stream_t {
     ly_audio_t audio;
 } ly_stream_t;
 
-typedef struct ly_output_t {
-    uint32_t    addr;
-    uint16_t    port;
-} ly_output_t;
-
 #define _FRAME_MAGIC_ (0x66668888)
 
 typedef struct ly_frame_t {
@@ -91,16 +86,13 @@ typedef struct ly_slice_t {
     uint8_t     slice_dat[1300];
 } ly_slice_t;
 
-#define _PROTO_CMD_MAGIC_ (0x55557777)
-#define _REQUEST_STREAM_  (1)
+#define _KEEPALIVE_MAGIC_ (0xFFEEFFEE)
 
-typedef struct ly_proto_cmd_t {
-    uint32_t    magic; // _PROTO_CMD_MAGIC_
-    uint16_t    cmd_id;
-    uint8_t     reserved[4];
+typedef struct ly_keepalive_t {
+    uint32_t    magic; // _KEEPALIVE_MAGIC_
     uint16_t    len;
     uint8_t     data[1300];
-} ly_proto_cmd_t;
+} ly_keepalive_t;
 
 #pragma pack(pop)
 

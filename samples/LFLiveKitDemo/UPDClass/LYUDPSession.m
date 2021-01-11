@@ -218,7 +218,7 @@ uint16_t const kBroadcastUDPPort = 20603;
 {
     if (data.length >= sizeof(ly_search_response_t)) {
         ly_search_response_t searchRespond;
-        memcmp(data.bytes, &searchRespond, sizeof(ly_search_response_t));
+        [data getBytes:&searchRespond length:sizeof(ly_search_response_t)];
         _search_response = &searchRespond;
         
         if (searchRespond.magic == LY_SEARCH_CMD) {
@@ -239,7 +239,7 @@ uint16_t const kBroadcastUDPPort = 20603;
     
     if (data.length >= sizeof(ly_request_port_response_t)) {
         ly_request_port_response_t request_port;
-        memcmp(data.bytes, &request_port, sizeof(ly_request_port_response_t));
+        [data getBytes:&request_port length:sizeof(ly_request_port_response_t)];
         _request_port = &request_port;
         
         if (request_port.magic == LY_REQ_PORT_CMD) {

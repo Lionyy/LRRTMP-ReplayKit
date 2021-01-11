@@ -31,7 +31,9 @@ typedef NS_ENUM (NSUInteger, LFLiveSocketErrorCode) {
     LFLiveSocketError_GetStreamInfo = 202,        ///< 获取流媒体信息失败
     LFLiveSocketError_ConnectSocket = 203,        ///< 连接socket失败
     LFLiveSocketError_Verification = 204,         ///< 验证服务器失败
-    LFLiveSocketError_ReConnectTimeOut = 205      ///< 重新连接服务器超时
+    LFLiveSocketError_ReConnectTimeOut = 205,     ///< 重新连接服务器超时
+    LFLiveSocketError_UDPMediaServer = 206        ///< UDP音视频接收服务错误
+
 };
 
 @interface LFLiveStreamInfo : NSObject

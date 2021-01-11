@@ -10,8 +10,10 @@
 #import "media_proto.h"
 
 uint16_t const kLocalUDPPort = 20605;
-static const NSInteger RetryTimesBreaken = 5;  ///<  重连1分钟  3秒一次 一共20次
-static const NSInteger RetryTimesMargin = 3;
+NSInteger const kSendAudioTag = 0xf1;
+NSInteger const kSendVideoTag = 0xf2;
+/// 心跳包最长接收间隔，超过则认为服务器故障，需重新获取音视频服务器
+NSInteger const kMaxKeepaliveTimeInterval = 5;
 
 @interface LYStreamingUDPSocket ()<LFStreamingBufferDelegate, GCDAsyncUdpSocketDelegate>
 
@@ -29,28 +31,25 @@ static const NSInteger RetryTimesMargin = 3;
 
 @property (nonatomic, assign) BOOL sendVideoHead;
 @property (nonatomic, assign) BOOL sendAudioHead;
-
 @property (nonatomic, assign) BOOL serverReady;
+
+@property (nonatomic, assign) NSTimeInterval keepaliveTime;
 
 @end
 
 
 @implementation LYStreamingUDPSocket
-#pragma mark -- LFStreamSocket
+
+#pragma mark - LFStreamSocket
+
 - (nullable instancetype)initWithStream:(nullable LFLiveStreamInfo *)stream{
     return [self initWithStream:stream reconnectInterval:0 reconnectCount:0];
 }
 
-- (nullable instancetype)initWithStream:(nullable LFLiveStreamInfo *)stream reconnectInterval:(NSInteger)reconnectInterval reconnectCount:(NSInteger)reconnectCount{
+- (nullable instancetype)initWithStream:(nullable LFLiveStreamInfo *)stream reconnectInterval:(NSInteger)reconnectInterval reconnectCount:(NSInteger)reconnectCount {
     if (!stream) @throw [NSException exceptionWithName:@"LFStreamRtmpSocket init error" reason:@"stream is nil" userInfo:nil];
     if (self = [super init]) {
         _stream = stream;
-        if (reconnectInterval > 0) _reconnectInterval = reconnectInterval;
-        else _reconnectInterval = RetryTimesMargin;
-        
-        if (reconnectCount > 0) _reconnectCount = reconnectCount;
-        else _reconnectCount = RetryTimesBreaken;
-        
         // 这里改成observer主要考虑一直到发送出错情况下，可以继续发送
         [self addObserver:self forKeyPath:@"isSending" options:NSKeyValueObservingOptionNew context:nil];
     }
@@ -109,7 +108,9 @@ static const NSInteger RetryTimesMargin = 3;
     if (!frame) return;
     [self.buffer appendObject:frame];
     
-    if(!self.isSending){
+    [self checkMediaServerKeepalive];
+    
+    if(!self.isSending) {
         [self sendFrame];
     }
 }
@@ -247,6 +248,20 @@ static const NSInteger RetryTimesMargin = 3;
 
     _serverReady = YES;
     _isSending = NO;
+    _keepaliveTime = NSDate.date.timeIntervalSince1970;
+}
+
+- (void)checkMediaServerKeepalive
+{
+    NSTimeInterval passTime = NSDate.date.timeIntervalSince1970 - _keepaliveTime;
+    if (passTime > kMaxKeepaliveTimeInterval) {
+        self.serverReady = NO;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (self.delegate && [self.delegate respondsToSelector:@selector(socketDidError:errorCode:)]) {
+                [self.delegate socketDidError:self errorCode:LFLiveSocketError_UDPMediaServer];
+            }
+        });
+    }
 }
 
 #pragma mark - UDP Send
@@ -271,7 +286,7 @@ static const NSInteger RetryTimesMargin = 3;
     slice.frame = frameT;
 
     NSInteger maxSliceSize = sizeof(slice.slice_dat);
-    [self sendFrame:frame mediaSlice:slice dataLimitedLength:maxSliceSize toUDPPort:self.stream.udpAudioPort];
+    [self sendFrame:frame mediaSlice:slice dataLimitedLength:maxSliceSize];
 }
 
 - (void)sendVideo:(LFVideoFrame *)frame {
@@ -297,12 +312,13 @@ static const NSInteger RetryTimesMargin = 3;
     frameT.timestamp = frame.timestamp;
     
     slice.frame = frameT;
+    slice.slice_len = frame.data.length;
     
     NSInteger maxSliceSize = sizeof(slice.slice_dat);
-    [self sendFrame:frame mediaSlice:slice dataLimitedLength:maxSliceSize toUDPPort:self.stream.udpVideoPort];
+    [self sendFrame:frame mediaSlice:slice dataLimitedLength:maxSliceSize];
 }
 
-- (void)sendFrame:(LFFrame *)frame mediaSlice:(ly_slice_t)slice dataLimitedLength:(NSInteger)limitedLength toUDPPort:(int16_t)udpPort {
+- (void)sendFrame:(LFFrame *)frame mediaSlice:(ly_slice_t)slice dataLimitedLength:(NSInteger)limitedLength {
 
     slice.slice_cnt = frame.data.length / limitedLength + frame.data.length % limitedLength ? 1 : 0;
     
@@ -325,52 +341,51 @@ static const NSInteger RetryTimesMargin = 3;
             sliceNum++;
             framePos += sliceTmp.slice_len;
             
-            [self sendSlice:sliceTmp toUDPPort:udpPort];
+            [self sendSlice:sliceTmp];
         }
     }else {
-        [self sendSlice:slice toUDPPort:udpPort];
+        [self sendSlice:slice];
     }
 }
 
-- (void)sendSlice:(ly_slice_t)slice toUDPPort:(int16_t)udpPort {
+- (void)sendSlice:(ly_slice_t)slice {
 
+    int16_t sendPort = self.stream.udpAudioPort;
+    NSInteger sendTag = kSendAudioTag;
+    if (slice.frame.media_type == LY_STREAM_TYPE_VIDEO) {
+        sendPort = self.stream.udpVideoPort;
+        sendTag = kSendVideoTag;
+    }
     NSData *sliceData = [NSData dataWithBytes:&slice length:sizeof(slice)];
-    [_udpSocket sendData:sliceData toHost:self.stream.udpHost port:udpPort withTimeout:-1 tag:101];
+    [_udpSocket sendData:sliceData toHost:self.stream.udpHost port:sendPort withTimeout:-1 tag:sendTag];
 }
 
 #pragma mark - GCDAsyncUdpSocketDelegate
 
-- (void)udpSocket:(GCDAsyncUdpSocket *)sock didNotConnect:(NSError * _Nullable)error
-{
-//    if (error) {
-//        [self reconnect];
-//    }
+- (void)udpSocket:(GCDAsyncUdpSocket *)sock didNotSendDataWithTag:(long)tag dueToError:(NSError * _Nullable)error {
+    if (error) {
+        [self checkMediaServerKeepalive];
+    }
 }
 
-- (void)udpSocket:(GCDAsyncUdpSocket *)sock didNotSendDataWithTag:(long)tag dueToError:(NSError * _Nullable)error
-{
-    
+- (void)udpSocketDidClose:(GCDAsyncUdpSocket *)sock withError:(NSError  * _Nullable)error {
+    self.serverReady = NO;
 }
 
-- (void)udpSocketDidClose:(GCDAsyncUdpSocket *)sock withError:(NSError  * _Nullable)error
-{
-    
+- (void)udpSocket:(GCDAsyncUdpSocket *)sock didReceiveData:(NSData *)data
+                                               fromAddress:(NSData *)address
+                                         withFilterContext:(nullable id)filterContext {
+    if (data.length >= sizeof(ly_keepalive_t)) {
+        ly_keepalive_t keepAliveT;
+        [data getBytes:&keepAliveT length:sizeof(keepAliveT)];
+        _keepaliveTime = NSDate.date.timeIntervalSince1970;
+        
+        if(keepAliveT.magic == _KEEPALIVE_MAGIC_) {
+            // 心跳包
+            self.serverReady = YES;
+        }
+    }
 }
-
-- (void)udpSocket:(GCDAsyncUdpSocket *)sock didConnectToAddress:(NSData *)address
-{
-    
-}
-
-//void RTMPErrorCallback(RTMPError *error, void *userData) {
-//    LFStreamRTMPSocket *socket = (__bridge LFStreamRTMPSocket *)userData;
-//    if (error->code < 0) {
-//        [socket reconnect];
-//    }
-//}
-//
-//void ConnectionTimeCallback(PILI_CONNECTION_TIME *conn_time, void *userData) {
-//}
 
 #pragma mark - LFStreamingBufferDelegate
 
