@@ -9,11 +9,8 @@
 #import "LFLiveSession.h"
 #import "LFHardwareVideoEncoder.h"
 #import "LFHardwareAudioEncoder.h"
-#import "LFH264VideoEncoder.h"
-#import "LFStreamRTMPSocket.h"
+#import "LYStreamingUDPSocket.h"
 #import "LFLiveStreamInfo.h"
-#import "LFH264VideoEncoder.h"
-
 
 @interface LFLiveSession ()<LFAudioEncodingDelegate, LFVideoEncodingDelegate, LFStreamSocketDelegate>
 
@@ -21,17 +18,12 @@
 @property (nonatomic, strong) LFLiveAudioConfiguration *audioConfiguration;
 /// 视频配置
 @property (nonatomic, strong) LFLiveVideoConfiguration *videoConfiguration;
-/// 声音采集
-//@property (nonatomic, strong) LFAudioCapture *audioCaptureSource;
-///// 视频采集
-//@property (nonatomic, strong) LFVideoCapture *videoCaptureSource;
 /// 音频编码
 @property (nonatomic, strong) id<LFAudioEncoding> audioEncoder;
 /// 视频编码
 @property (nonatomic, strong) id<LFVideoEncoding> videoEncoder;
 /// 上传
 @property (nonatomic, strong) id<LFStreamSocket> socket;
-
 
 #pragma mark -- 内部标识
 /// 调试信息
@@ -47,12 +39,10 @@
 /// 时间戳锁
 @property (nonatomic, strong) dispatch_semaphore_t lock;
 
-
 @end
 
 /**  时间戳 */
 #define NOW (CACurrentMediaTime()*1000)
-#define SYSTEM_VERSION_LESS_THAN(v) ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
 
 @interface LFLiveSession ()
 
@@ -245,11 +235,7 @@
 
 - (id<LFVideoEncoding>)videoEncoder {
     if (!_videoEncoder) {
-        if([[UIDevice currentDevice].systemVersion floatValue] < 8.0){
-            _videoEncoder = [[LFH264VideoEncoder alloc] initWithVideoStreamConfiguration:_videoConfiguration];
-        }else{
-            _videoEncoder = [[LFHardwareVideoEncoder alloc] initWithVideoStreamConfiguration:_videoConfiguration];
-        }
+        _videoEncoder = [[LFHardwareVideoEncoder alloc] initWithVideoStreamConfiguration:_videoConfiguration];
         [_videoEncoder setDelegate:self];
     }
     return _videoEncoder;
@@ -257,7 +243,7 @@
 
 - (id<LFStreamSocket>)socket {
     if (!_socket) {
-        _socket = [[LFStreamRTMPSocket alloc] initWithStream:self.streamInfo reconnectInterval:self.reconnectInterval reconnectCount:self.reconnectCount];
+        _socket = [[LYStreamingUDPSocket alloc] initWithStream:self.streamInfo];
         [_socket setDelegate:self];
     }
     return _socket;
@@ -270,7 +256,7 @@
     return _streamInfo;
 }
 
-- (dispatch_semaphore_t)lock{
+- (dispatch_semaphore_t)lock {
     if(!_lock){
         _lock = dispatch_semaphore_create(1);
     }

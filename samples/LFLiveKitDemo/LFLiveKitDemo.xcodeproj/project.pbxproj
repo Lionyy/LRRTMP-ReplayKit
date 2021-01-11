@@ -13,6 +13,7 @@
 		655FCB4125A986CF009A5376 /* LYUDPSession.m in Sources */ = {isa = PBXBuildFile; fileRef = 655FCB3B25A986CF009A5376 /* LYUDPSession.m */; };
 		655FCB4225A986CF009A5376 /* YYReachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 655FCB3E25A986CF009A5376 /* YYReachability.m */; };
 		65897D4125ABE87B00177A22 /* LYUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 65897D4025ABE87B00177A22 /* LYUtils.m */; };
+		65897D4925AC655E00177A22 /* LYUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 65897D4025ABE87B00177A22 /* LYUtils.m */; };
 		7D0A55C221B8FFE100695148 /* ReplayKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D0A55C121B8FFE100695148 /* ReplayKit.framework */; };
 		7D0A55C621B8FFE100695148 /* SampleHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 7D0A55C521B8FFE100695148 /* SampleHandler.m */; };
 		7D0A55CD21B8FFE100695148 /* ReplayKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D0A55C121B8FFE100695148 /* ReplayKit.framework */; };
@@ -462,6 +463,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				65897D4925AC655E00177A22 /* LYUtils.m in Sources */,
 				7D0A55E421B9006000695148 /* ZFUploadTool.m in Sources */,
 				7D0A55C621B8FFE100695148 /* SampleHandler.m in Sources */,
 			);

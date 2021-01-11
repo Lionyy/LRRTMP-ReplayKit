@@ -17,6 +17,8 @@
 
 NSString * const kBroadcastUDPIP = @"255.255.255.255";
 uint16_t const kBroadcastUDPPort = 20603;
+NSInteger const kSendSearchServerTag = 0xe1;
+NSInteger const kSendRequestMediaServerTag = 0xe2;
 
 @interface LYUDPSession()<GCDAsyncUdpSocketDelegate>
 {
@@ -33,6 +35,8 @@ uint16_t const kBroadcastUDPPort = 20603;
 @property (copy  , nonatomic) NSString * mediaIpAddress;
 @property (assign, nonatomic) uint16_t videoPort;
 @property (assign, nonatomic) uint16_t audioPort;
+
+@property (assign, nonatomic) BOOL needRequest;
 
 @end
 
@@ -65,13 +69,6 @@ uint16_t const kBroadcastUDPPort = 20603;
     _udpSocket = [[GCDAsyncUdpSocket alloc] initWithDelegate:self delegateQueue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)];
     [_udpSocket setIPv4Enabled:YES];
     [_udpSocket setIPv6Enabled:YES];
-    
-    NSError *error = nil;
-    [_udpSocket enableBroadcast:YES error:&error];
-    
-    if(error) {
-        NSLog(@"enableBroadcast 失败: %@", error);
-    }
 }
 
 #pragma mark - UDP Socket
@@ -100,7 +97,8 @@ uint16_t const kBroadcastUDPPort = 20603;
     
     NSData *searchData = [NSData dataWithBytes:&search length:sizeof(ly_search_t)];
     
-    [_udpSocket sendData:searchData toHost:kBroadcastUDPIP port:kBroadcastUDPPort withTimeout:-1 tag:1000];
+    [_udpSocket enableBroadcast:YES error:&error];
+    [_udpSocket sendData:searchData toHost:kBroadcastUDPIP port:kBroadcastUDPPort withTimeout:-1 tag:kSendSearchServerTag];
     [_udpSocket beginReceiving:&error];
 
     if (error) {
@@ -108,34 +106,30 @@ uint16_t const kBroadcastUDPPort = 20603;
         
         [self handleRequestError:error];
 
-        if (_delegate && [_delegate respondsToSelector:@selector(udpSession:didRequestError:)]) {
-            [_delegate udpSession:self didRequestError:error];
+        if (_delegate && [_delegate respondsToSelector:@selector(udpSession:didSearchServerError:)]) {
+            [_delegate udpSession:self didSearchServerError:error];
         }
-        
-        // 间隔3秒再次请求
-        @weakify(self)
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            @strongify(self)
-            [self searchServerAddress];
-        });
     }
 }
 
 - (void)requestMediaServerIPAndPort
 {
     if (!self.ipAddress || self.port == 0) {
+        _needRequest = YES;
+        [self searchServerAddress];
         return;
     }
 
     NSError *error = nil;
-
+    _needRequest = NO;
+    
     ly_request_port_t reuqest;
     memset(&reuqest, 0, sizeof(ly_request_port_t));
     reuqest.magic = LY_REQ_PORT_CMD;
     
     NSData *reuqestData = [NSData dataWithBytes:&reuqest length:sizeof(ly_search_t)];
     
-    [_udpSocket sendData:reuqestData toHost:self.ipAddress port:self.port withTimeout:-1 tag:1000];
+    [_udpSocket sendData:reuqestData toHost:self.ipAddress port:self.port withTimeout:-1 tag:kSendRequestMediaServerTag];
     [_udpSocket enableBroadcast:NO error:&error];
     [_udpSocket beginReceiving:&error];
     
@@ -144,16 +138,9 @@ uint16_t const kBroadcastUDPPort = 20603;
 
         [self handleRequestError:error];
         
-        if (_delegate && [_delegate respondsToSelector:@selector(udpSession:didRequestError:)]) {
-            [_delegate udpSession:self didRequestError:error];
+        if (_delegate && [_delegate respondsToSelector:@selector(udpSession:didRequestMediaServerIPAndPortError:)]) {
+            [_delegate udpSession:self didRequestMediaServerIPAndPortError:error];
         }
-        
-        // 间隔3秒再次请求
-        @weakify(self)
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            @strongify(self)
-            [self requestMediaServerIPAndPort];
-        });
     }
 }
 
@@ -199,17 +186,21 @@ uint16_t const kBroadcastUDPPort = 20603;
 
 - (void)udpSocket:(GCDAsyncUdpSocket *)sock didNotSendDataWithTag:(long)tag dueToError:(NSError * _Nullable)error
 {
-    NSLog(@"didNotSendDataWithTag error: %@", error);
+    NSLog(@"[LYUDPSession] didNotSendDataWithTag: %@ error: %@", @(tag), error);
+    if (tag == kSendSearchServerTag) {
+        if (_delegate && [_delegate respondsToSelector:@selector(udpSession:didSearchServerError:)]) {
+            [_delegate udpSession:self didSearchServerError:error];
+        }
+    } else if (tag == kSendRequestMediaServerTag) {
+        if (_delegate && [_delegate respondsToSelector:@selector(udpSession:didRequestMediaServerIPAndPortError:)]) {
+            [_delegate udpSession:self didRequestMediaServerIPAndPortError:error];
+        }
+    }
 }
 
 - (void)udpSocketDidClose:(GCDAsyncUdpSocket *)sock withError:(NSError * _Nullable)error
 {
-    
-}
-
-- (void)udpSocket:(GCDAsyncUdpSocket *)sock didConnectToAddress:(NSData *)address
-{
-    
+    NSLog(@"[LYUDPSession] udpSocketDidClose error: %@", error);
 }
 
 - (void)udpSocket:(GCDAsyncUdpSocket *)sock didReceiveData:(NSData *)data
@@ -226,6 +217,10 @@ uint16_t const kBroadcastUDPPort = 20603;
             self.ipAddress = [LYUtils ipStringWithAddress:searchRespond.addr];// [GCDAsyncUdpSocket hostFromAddress:address];
             self.port = searchRespond.port;
 
+            if (_needRequest) {
+                [self requestMediaServerIPAndPort];
+            }
+            
             NSLog(@"收到来自[%@:%@]广播搜索投屏服务的IP及端口响应", self.ipAddress, @(self.port));
             @weakify(self)
             dispatch_async(dispatch_get_main_queue(), ^{

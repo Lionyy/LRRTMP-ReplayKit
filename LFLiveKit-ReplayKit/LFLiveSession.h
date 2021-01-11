@@ -16,16 +16,13 @@
 #import "LFLiveVideoConfiguration.h"
 #import "LFLiveDebug.h"
 
-
-
-typedef NS_ENUM(NSInteger,LFLiveCaptureType) {
+typedef NS_ENUM(NSInteger, LFLiveCaptureType) {
     LFLiveInputAudio,           ///< only audio (External input audio)
     LFLiveInputVideo,           ///< only video (External input video)
 };
 
-
 ///< 用来控制采集类型（可以内部采集也可以外部传入等各种组合，支持单音频与单视频,外部输入适用于录屏，无人机等外设介入）
-typedef NS_ENUM(NSInteger,LFLiveCaptureTypeMask) {
+typedef NS_ENUM(NSInteger, LFLiveCaptureTypeMask) {
     LFLiveInputMaskAudio = (1 << LFLiveInputAudio),                                     ///< only outer input audio (no video)
     LFLiveInputMaskVideo = (1 << LFLiveInputVideo),                                     ///< only outer input video (no audio)
     LFLiveInputMaskAll = (LFLiveInputMaskAudio | LFLiveInputMaskVideo),                 ///< outer input audio and video(method see pushVideo and pushAudio)
@@ -75,7 +72,6 @@ typedef NS_ENUM(NSInteger,LFLiveCaptureTypeMask) {
 /** The reconnectCount control reconnect count (重连次数) *.*/
 @property (nonatomic, assign) NSUInteger reconnectCount;
 
-
 #pragma mark - Initializer
 ///=============================================================================
 /// @name Initializer
@@ -95,23 +91,17 @@ typedef NS_ENUM(NSInteger,LFLiveCaptureTypeMask) {
  */
 - (nullable instancetype)initWithAudioConfiguration:(nullable LFLiveAudioConfiguration *)audioConfiguration videoConfiguration:(nullable LFLiveVideoConfiguration *)videoConfiguration captureType:(LFLiveCaptureTypeMask)captureType NS_DESIGNATED_INITIALIZER;
 
-/** The start stream .*/
+/** The start stream. */
 - (void)startLive:(nonnull LFLiveStreamInfo *)streamInfo;
 
-/** The stop stream .*/
+/** The stop stream. */
 - (void)stopLive;
 
-
+/** publish video data from CMSampleBufferRef  */
 - (void)pushVideoBuffer:(CMSampleBufferRef)sampleBuffer;
+
+/** publish audio data CMSampleBufferRef */
 - (void)pushAudioBuffer:(CMSampleBufferRef)sampleBuffer;
-
-/*
-  // support outer input yuv or rgb video(set LFLiveCaptureTypeMask)
-- (void)pushVideo:(nullable CVPixelBufferRef)pixelBuffer;
-
-// support outer input pcm audio(set LFLiveCaptureTypeMask)
-- (void)pushAudio:(nullable NSData*)audioData;
- */
 
 @end
 

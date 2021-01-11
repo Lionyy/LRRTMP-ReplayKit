@@ -7,25 +7,8 @@
 //
 
 #import "ZFUploadTool.h"
+#import "LYUtils.h"
 #import <LFLiveKit.h>
-
-inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
-    if (elapsed_milli <= 0) {
-        return @"N/A";
-    }
-    if (bytes <= 0) {
-        return @"0 KB/s";
-    }
-    float bytes_per_sec = ((float)bytes) * 1000.f /  elapsed_milli;
-    if (bytes_per_sec >= 1000 * 1000) {
-        return [NSString stringWithFormat:@"%.2f MB/s", ((float)bytes_per_sec) / 1000 / 1000];
-    } else if (bytes_per_sec >= 1000) {
-        return [NSString stringWithFormat:@"%.1f KB/s", ((float)bytes_per_sec) / 1000];
-    } else {
-        return [NSString stringWithFormat:@"%ld B/s", (long)bytes_per_sec];
-    }
-}
-
 
 @interface ZFUploadTool () <LFLiveSessionDelegate>
 
@@ -129,7 +112,7 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
 
 /** live debug info callback */
 - (void)liveSession:(nullable LFLiveSession *)session debugInfo:(nullable LFLiveDebug *)debugInfo {
-    NSString *speed = formatedSpeed(debugInfo.currentBandwidth, debugInfo.elapsedMilli);
+    NSString *speed = [LYUtils formatedSpeed:debugInfo.currentBandwidth elapsedMilli:debugInfo.elapsedMilli];
     NSLog(@"speed:%@", speed);
     
 }

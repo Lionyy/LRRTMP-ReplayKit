@@ -16,6 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (NSString *)ipStringWithAddress:(uint32_t)addr;
 
++ (NSString *)formatedSpeed:(float)bytes elapsedMilli:(float)elapsed_milli;
+
 @end
 
 NS_ASSUME_NONNULL_END

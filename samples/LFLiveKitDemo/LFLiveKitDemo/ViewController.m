@@ -11,36 +11,19 @@
 #import <LFLiveKit.h>
 #import "AppDelegate.h"
 #import "LYUDPSession.h"
+#import "LYUtils.h"
 
-inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
-    if (elapsed_milli <= 0) {
-        return @"N/A";
-    }
-    if (bytes <= 0) {
-        return @"0 KB/s";
-    }
-    float bytes_per_sec = ((float)bytes) * 1000.f /  elapsed_milli;
-    if (bytes_per_sec >= 1000 * 1000) {
-        return [NSString stringWithFormat:@"%.2f MB/s", ((float)bytes_per_sec) / 1000 / 1000];
-    } else if (bytes_per_sec >= 1000) {
-        return [NSString stringWithFormat:@"%.1f KB/s", ((float)bytes_per_sec) / 1000];
-    } else {
-        return [NSString stringWithFormat:@"%ld B/s", (long)bytes_per_sec];
-    }
-}
-
-
-@interface ViewController () <LFLiveSessionDelegate, RPBroadcastControllerDelegate, RPBroadcastActivityViewControllerDelegate>
+@interface ViewController () <LFLiveSessionDelegate, RPBroadcastControllerDelegate, RPBroadcastActivityViewControllerDelegate, LYUDPSessionDelegate>
 @property (nonatomic, strong) LFLiveSession *session;
 @property (nonatomic, strong) LYUDPSession * udpSession;
 @property (nonatomic, strong) UIView *testView;
 @property (nonatomic, strong) RPBroadcastController *broadcastController;
 @property (nonatomic, strong) UIView *pickerView;
+
+@property (nonatomic) BOOL needQueryMediaServer;
 @end
 
 @implementation ViewController
-
-
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -116,6 +99,7 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
     [self.view addSubview:statrButton2];
     
     _udpSession = [[LYUDPSession alloc] init];
+    _udpSession.delegate = self;
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -170,7 +154,7 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
 }
 
 - (void)liveSession:(nullable LFLiveSession *)session debugInfo:(nullable LFLiveDebug *)debugInfo {
-    NSString *speed = formatedSpeed(debugInfo.currentBandwidth, debugInfo.elapsedMilli);
+    NSString *speed = [LYUtils formatedSpeed:debugInfo.currentBandwidth elapsedMilli:debugInfo.elapsedMilli];
     NSLog(@"speed:%@", speed);
 }
 
@@ -180,9 +164,9 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
 
 
 - (void)perpare {
-    
-    [_udpSession searchServerAddress];
-    
+        
+    [_udpSession requestMediaServerIPAndPort];
+
 //    LFLiveStreamInfo *stream = [LFLiveStreamInfo new];
 //    // 直播推流地址
 //    stream.url = @"rtmp://192.168.45.174/live/123";
@@ -235,8 +219,6 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
         
     }
 }
-
-
 
 #pragma mark -
 #pragma mark Extension
@@ -329,5 +311,28 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
 - (void)broadcastController:(RPBroadcastController *)broadcastController didUpdateBroadcastURL:(NSURL *)broadcastURL {
     NSLog(@"---didUpdateBroadcastURL: %@",broadcastURL);
 }
+
+#pragma mark - LYUDPSessionDelegate
+
+/// UDP广播获取命令服务器ip地址、端口号失败回调
+- (void)udpSession:(LYUDPSession *)udpSession didSearchServerError:(NSError *)error {
+    
+}
+
+/// 请求音视频服务器UPD推流地址及端口号失败回调
+- (void)udpSession:(LYUDPSession *)udpSession didRequestMediaServerIPAndPortError:(NSError *)error {
+    
+}
+
+/// 获取到服务器地址及端口信息
+- (void)udpSession:(LYUDPSession *)udpSession didReceivedServerHost:(NSString *)host port:(uint16_t)port {
+    
+}
+
+/// 获取到音视频UDP推流服务器地址及端口信息
+- (void)udpSession:(LYUDPSession *)udpSession didReceivedUDPMediaHost:(NSString *)host audioPort:(uint16_t)audioPort videoPort:(uint16_t)videoPort {
+    
+}
+
 
 @end

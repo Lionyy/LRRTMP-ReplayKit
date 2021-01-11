@@ -12,8 +12,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class LYUDPSession;
 @protocol LYUDPSessionDelegate <NSObject>
-/// 请求失败回调
-- (void)udpSession:(LYUDPSession *)udpSession didRequestError:(NSError *)error;
+/// UDP广播获取命令服务器ip地址、端口号失败回调
+- (void)udpSession:(LYUDPSession *)udpSession didSearchServerError:(NSError *)error;
+/// 请求音视频服务器UPD推流地址及端口号失败回调
+- (void)udpSession:(LYUDPSession *)udpSession didRequestMediaServerIPAndPortError:(NSError *)error;
 /// 获取到服务器地址及端口信息
 - (void)udpSession:(LYUDPSession *)udpSession didReceivedServerHost:(NSString *)host port:(uint16_t)port;
 /// 获取到音视频UDP推流服务器地址及端口信息
@@ -35,7 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// 视频UPD推流端口号
 @property (assign, nonatomic, readonly) uint16_t videoPort;
 
-/// UDP广播获取ip地址、端口号
+/// UDP广播获取命令服务器ip地址、端口号
 - (void)searchServerAddress;
 
 /// 请求音视频服务器UPD推流地址及端口号
