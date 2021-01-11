@@ -13,7 +13,7 @@
 #import "YYReachability.h"
 #import "LYMacro.h"
 #import "req_proto.h"
-#import <arpa/inet.h>
+#import "LYUtils.h"
 
 NSString * const kBroadcastUDPIP = @"255.255.255.255";
 uint16_t const kBroadcastUDPPort = 20603;
@@ -55,7 +55,7 @@ uint16_t const kBroadcastUDPPort = 20603;
     _reachability.notifyBlock = ^(YYReachability * _Nonnull reachability) {
         @strongify(self)
         if (reachability.status == YYReachabilityStatusWiFi) {
-            [self sendBroadcast];
+            [self searchServerAddress];
         }
     };
 }
@@ -67,6 +67,8 @@ uint16_t const kBroadcastUDPPort = 20603;
     [_udpSocket setIPv6Enabled:YES];
 }
 
+#pragma mark - UDP Socket
+
 - (void)closeUdpSocket
 {
     if (_udpSocket) {
@@ -75,13 +77,10 @@ uint16_t const kBroadcastUDPPort = 20603;
     }
 }
 
-- (void)sendBroadcast
+#pragma mark - UDP Request
+
+- (void)searchServerAddress
 {
-    if (_reachability.status != YYReachabilityStatusWiFi) {
-        [LKAlert alert:@"请检查手机是否连接到正确的Wifi？" okAction:nil];
-        return;
-    }
-    
     NSError *error = nil;
     [_udpSocket bindToPort:kBroadcastUDPPort error:&error];
     if(error) {
@@ -99,22 +98,20 @@ uint16_t const kBroadcastUDPPort = 20603;
     [_udpSocket beginReceiving:&error];
     
     if (error) {
-        NSLog(@"广播发送失败: %@", error);
-        if (error.code == GCDAsyncUdpSocketBadConfigError) {
-            
-            if (_delegate && [_delegate respondsToSelector:@selector(udpSession:didBroadcastError:)]) {
-                [_delegate udpSession:self didBroadcastError:error];
-            }
-            
-            [LKAlert showAlertViewTitle:nil message:@"要开启本地网络权限后，才能投屏，是否去开启？" leftButtonTitle:@"取消" rightButtonTitle:@"去设置" leftButtonAction:^(UIAlertAction *action) {
-                
-            } rightButtonAction:^(UIAlertAction *action) {
-                NSURL *url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
-                if (url  && [[UIApplication sharedApplication] canOpenURL:url]) {
-                    [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
-                }
-            }];
+        NSLog(@"广播搜索投屏服务的IP及端口发送失败: %@", error);
+        
+        [self handleRequestError:error];
+
+        if (_delegate && [_delegate respondsToSelector:@selector(udpSession:didRequestError:)]) {
+            [_delegate udpSession:self didRequestError:error];
         }
+        
+        // 间隔3秒再次请求
+        @weakify(self)
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            @strongify(self)
+            [self searchServerAddress];
+        });
     }
 }
 
@@ -123,7 +120,7 @@ uint16_t const kBroadcastUDPPort = 20603;
     if (!self.ipAddress || self.port == 0) {
         return;
     }
-    
+
     NSError *error = nil;
 
     ly_request_port_t reuqest;
@@ -137,8 +134,59 @@ uint16_t const kBroadcastUDPPort = 20603;
     [_udpSocket beginReceiving:&error];
     
     if (error) {
+        NSLog(@"请求接音视频数据的IP及端口发送失败: %@", error);
+
+        [self handleRequestError:error];
         
+        if (_delegate && [_delegate respondsToSelector:@selector(udpSession:didRequestError:)]) {
+            [_delegate udpSession:self didRequestError:error];
+        }
+        
+        // 间隔3秒再次请求
+        @weakify(self)
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            @strongify(self)
+            [self requestMediaServerIPAndPort];
+        });
     }
+}
+
+#pragma mark - Error Alert
+
+- (void)checkConnectedWiFi
+{
+    if (_reachability.status != YYReachabilityStatusWiFi) {
+        [LKAlert alert:@"请检查手机是否连接到正确的Wifi？" okAction:nil];
+        return;
+    }
+}
+
+- (void)handleRequestError:(NSError *)error
+{
+    if (error.code == GCDAsyncUdpSocketBadConfigError) {
+        [self showLocalNetworkPermissionAlert];
+    }
+}
+
+- (void)showLocalNetworkPermissionAlert
+{
+    if ([LYUtils isFirstLaunchApp]) {
+        return;
+    }
+    
+    static BOOL alertOnce = NO;
+    if (alertOnce) {
+        return;
+    }
+    alertOnce = YES;
+    
+    [LKAlert showAlertViewTitle:nil message:@"要开启本地网络权限后，才能投屏，是否去开启？" leftButtonTitle:@"取消" rightButtonTitle:@"去设置" leftButtonAction:^(UIAlertAction *action) {
+    } rightButtonAction:^(UIAlertAction *action) {
+        NSURL *url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
+        if (url  && [[UIApplication sharedApplication] canOpenURL:url]) {
+            [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+        }
+    }];
 }
 
 #pragma mark - GCDAsyncUdpSocketDelegate
@@ -148,7 +196,7 @@ uint16_t const kBroadcastUDPPort = 20603;
     NSLog(@"didNotSendDataWithTag error: %@", error);
 }
 
-- (void)udpSocketDidClose:(GCDAsyncUdpSocket *)sock withError:(NSError  * _Nullable)error
+- (void)udpSocketDidClose:(GCDAsyncUdpSocket *)sock withError:(NSError * _Nullable)error
 {
     
 }
@@ -159,8 +207,8 @@ uint16_t const kBroadcastUDPPort = 20603;
 }
 
 - (void)udpSocket:(GCDAsyncUdpSocket *)sock didReceiveData:(NSData *)data
-                                             fromAddress:(NSData *)address
-                                       withFilterContext:(nullable id)filterContext
+                                               fromAddress:(NSData *)address
+                                         withFilterContext:(nullable id)filterContext
 {
     if (data.length >= sizeof(ly_search_response_t)) {
         ly_search_response_t searchRespond;
@@ -169,19 +217,15 @@ uint16_t const kBroadcastUDPPort = 20603;
         
         if (searchRespond.magic == LY_SEARCH_CMD) {
             // 广播搜索投屏服务的IP及端口响应
-            // TODO: 解析地址及端口逻辑
-            uint32_t ip = searchRespond.addr;
-            struct in_addr addr = *(struct in_addr *)&ip;
-            NSString *ipString = [NSString stringWithFormat: @"%s",inet_ntoa(addr)];
-            
-            self.ipAddress = ipString;// [GCDAsyncUdpSocket hostFromAddress:address];
+            self.ipAddress = [LYUtils ipStringWithAddress:searchRespond.addr];// [GCDAsyncUdpSocket hostFromAddress:address];
             self.port = searchRespond.port;
 
             NSLog(@"收到来自[%@:%@]广播搜索投屏服务的IP及端口响应", self.ipAddress, @(self.port));
-
+            @weakify(self)
             dispatch_async(dispatch_get_main_queue(), ^{
-                if (_delegate && [_delegate respondsToSelector:@selector(udpSession:didReceivedServerHost:port:)]) {
-                    [_delegate udpSession:self didReceivedServerHost:self.ipAddress port:self.port];
+                @strongify(self)
+                if (self.delegate && [self.delegate respondsToSelector:@selector(udpSession:didReceivedServerHost:port:)]) {
+                    [self.delegate udpSession:self didReceivedServerHost:self.ipAddress port:self.port];
                 }
             });
         }
@@ -194,18 +238,17 @@ uint16_t const kBroadcastUDPPort = 20603;
         
         if (request_port.magic == LY_REQ_PORT_CMD) {
             // 请求接音视频数据的IP及端口响应
-            
-            uint32_t ip = request_port.addr;
-            struct in_addr addr = *(struct in_addr *)&ip;
-            NSString *ipString = [NSString stringWithFormat: @"%s",inet_ntoa(addr)];
-            self.mediaIpAddress = ipString;
-            self.videoPort = request_port.video_port;
+            self.mediaIpAddress = [LYUtils ipStringWithAddress:request_port.addr];
             self.audioPort = request_port.audio_port;
+            self.videoPort = request_port.video_port;
 
             NSLog(@"收到来自[%@:%@:%@]接音视频数据的IP及端口响应", self.mediaIpAddress, @(self.videoPort), @(self.audioPort));
-            // TODO: 解析地址及端口逻辑
+            @weakify(self)
             dispatch_async(dispatch_get_main_queue(), ^{
-
+                @strongify(self)
+                if (self.delegate && [self.delegate respondsToSelector:@selector(udpSession:didReceivedUDPMediaHost:audioPort:videoPort:)]) {
+                    [self.delegate udpSession:self didReceivedUDPMediaHost:self.mediaIpAddress audioPort:self.audioPort videoPort:self.videoPort];
+                }
             });
         }
     }

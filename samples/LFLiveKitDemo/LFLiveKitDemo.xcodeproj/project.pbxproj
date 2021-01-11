@@ -12,6 +12,7 @@
 		655FCB4025A986CF009A5376 /* LKAlert.m in Sources */ = {isa = PBXBuildFile; fileRef = 655FCB3A25A986CF009A5376 /* LKAlert.m */; };
 		655FCB4125A986CF009A5376 /* LYUDPSession.m in Sources */ = {isa = PBXBuildFile; fileRef = 655FCB3B25A986CF009A5376 /* LYUDPSession.m */; };
 		655FCB4225A986CF009A5376 /* YYReachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 655FCB3E25A986CF009A5376 /* YYReachability.m */; };
+		65897D4125ABE87B00177A22 /* LYUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 65897D4025ABE87B00177A22 /* LYUtils.m */; };
 		7D0A55C221B8FFE100695148 /* ReplayKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D0A55C121B8FFE100695148 /* ReplayKit.framework */; };
 		7D0A55C621B8FFE100695148 /* SampleHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 7D0A55C521B8FFE100695148 /* SampleHandler.m */; };
 		7D0A55CD21B8FFE100695148 /* ReplayKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D0A55C121B8FFE100695148 /* ReplayKit.framework */; };
@@ -74,6 +75,8 @@
 		655FCB3F25A986CF009A5376 /* LYUDPSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LYUDPSession.h; sourceTree = "<group>"; };
 		655FCB4C25A9879F009A5376 /* LFLiveKitDemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LFLiveKitDemo.entitlements; sourceTree = "<group>"; };
 		655FCB5A25A98A54009A5376 /* LYMacro.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LYMacro.h; sourceTree = "<group>"; };
+		65897D3F25ABE87B00177A22 /* LYUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LYUtils.h; sourceTree = "<group>"; };
+		65897D4025ABE87B00177A22 /* LYUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LYUtils.m; sourceTree = "<group>"; };
 		7D0A55C021B8FFE100695148 /* Recoder.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Recoder.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		7D0A55C121B8FFE100695148 /* ReplayKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ReplayKit.framework; path = System/Library/Frameworks/ReplayKit.framework; sourceTree = SDKROOT; };
 		7D0A55C421B8FFE100695148 /* SampleHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SampleHandler.h; sourceTree = "<group>"; };
@@ -139,6 +142,8 @@
 				655FCB3825A986CF009A5376 /* Alert */,
 				655FCB5A25A98A54009A5376 /* LYMacro.h */,
 				6512697E25AB3B6500C53E46 /* req_proto.h */,
+				65897D3F25ABE87B00177A22 /* LYUtils.h */,
+				65897D4025ABE87B00177A22 /* LYUtils.m */,
 				655FCB3F25A986CF009A5376 /* LYUDPSession.h */,
 				655FCB3B25A986CF009A5376 /* LYUDPSession.m */,
 				655FCB3C25A986CF009A5376 /* Reachability */,
@@ -480,6 +485,7 @@
 				84D8B42E1D75778B00752B56 /* AppDelegate.m in Sources */,
 				84D8B42B1D75778B00752B56 /* main.m in Sources */,
 				655FCB4025A986CF009A5376 /* LKAlert.m in Sources */,
+				65897D4125ABE87B00177A22 /* LYUtils.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

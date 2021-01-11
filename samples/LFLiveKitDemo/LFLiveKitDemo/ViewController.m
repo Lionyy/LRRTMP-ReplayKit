@@ -122,7 +122,7 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
 {
     [super viewDidAppear:animated];
     
-    [_udpSession sendBroadcast];
+    [_udpSession searchServerAddress];
 }
 
 #pragma mark -- Getter Setter
@@ -181,7 +181,7 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
 
 - (void)perpare {
     
-    [_udpSession sendBroadcast];
+    [_udpSession searchServerAddress];
     
 //    LFLiveStreamInfo *stream = [LFLiveStreamInfo new];
 //    // 直播推流地址

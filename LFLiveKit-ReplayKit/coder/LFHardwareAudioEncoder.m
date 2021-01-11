@@ -8,6 +8,8 @@
 
 #import "LFHardwareAudioEncoder.h"
 
+#define LFUseAACADTSHeader 1
+
 @interface LFHardwareAudioEncoder (){
     AudioConverterRef m_converter;
     char *leftBuf;
@@ -89,7 +91,7 @@
     }
 }
 
-- (void)encodeBuffer:(char*)buf timeStamp:(uint64_t)timeStamp{
+- (void)encodeBuffer:(char*)buf timeStamp:(uint64_t)timeStamp {
     
     AudioBuffer inBuffer;
     inBuffer.mNumberChannels = 1;
@@ -99,7 +101,6 @@
     AudioBufferList buffers;
     buffers.mNumberBuffers = 1;
     buffers.mBuffers[0] = inBuffer;
-    
     
     // 初始化一个输出缓冲列表
     AudioBufferList outBufferList;
@@ -114,7 +115,16 @@
     
     LFAudioFrame *audioFrame = [LFAudioFrame new];
     audioFrame.timestamp = timeStamp;
+    
+#ifdef LFUseAACADTSHeader
+    NSData *rawData = [NSData dataWithBytes:aacBuf length:outBufferList.mBuffers[0].mDataByteSize];
+    NSData *adtsData = [self adtsData:_configuration.numberOfChannels rawDataLength:rawData.length];
+    NSMutableData *audioData = [NSMutableData dataWithData:adtsData];
+    [audioData appendData:rawData];
+    audioFrame.data = audioData;
+#else
     audioFrame.data = [NSData dataWithBytes:aacBuf length:outBufferList.mBuffers[0].mDataByteSize];
+#endif
     
     char exeData[2];
     exeData[0] = _configuration.asc[0];
@@ -129,7 +139,6 @@
         fwrite(adts.bytes, 1, adts.length, self->fp);
         fwrite(audioFrame.data.bytes, 1, audioFrame.data.length, self->fp);
     }
-    
 }
 
 - (void)stopEncoder {
