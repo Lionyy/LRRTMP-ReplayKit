@@ -61,6 +61,10 @@ typedef NS_ENUM (NSUInteger, LFLiveAudioQuality){
 ///=============================================================================
 /// 声道数目(default 2)
 @property (nonatomic, assign) NSUInteger numberOfChannels;
+/// 每个声音样本的位数(default 16)
+@property (nonatomic, assign) NSUInteger bitsPerChannel;
+/// 每帧字节数(default AAC 1024)
+@property (nonatomic, assign) NSUInteger framesPerPacket;
 /// 采样率
 @property (nonatomic, assign) LFLiveAudioSampleRate audioSampleRate;
 /// 码率

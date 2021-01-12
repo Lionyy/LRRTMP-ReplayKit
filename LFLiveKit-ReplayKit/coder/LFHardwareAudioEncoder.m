@@ -160,7 +160,7 @@
     inputFormat.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;
     inputFormat.mChannelsPerFrame = (UInt32)_configuration.numberOfChannels;
     inputFormat.mFramesPerPacket = 1;
-    inputFormat.mBitsPerChannel = 16;
+    inputFormat.mBitsPerChannel = (UInt32)_configuration.bitsPerChannel;
     inputFormat.mBytesPerFrame = inputFormat.mBitsPerChannel / 8 * inputFormat.mChannelsPerFrame;
     inputFormat.mBytesPerPacket = inputFormat.mBytesPerFrame * inputFormat.mFramesPerPacket;
     
@@ -168,8 +168,8 @@
     memset(&outputFormat, 0, sizeof(outputFormat));
     outputFormat.mSampleRate = inputFormat.mSampleRate;       // 采样率保持一致
     outputFormat.mFormatID = kAudioFormatMPEG4AAC;            // AAC编码 kAudioFormatMPEG4AAC kAudioFormatMPEG4AAC_HE_V2
-    outputFormat.mChannelsPerFrame = (UInt32)_configuration.numberOfChannels;;
-    outputFormat.mFramesPerPacket = 1024;                     // AAC一帧是1024个字节
+    outputFormat.mChannelsPerFrame = (UInt32)_configuration.numberOfChannels;
+    outputFormat.mFramesPerPacket = (UInt32)_configuration.framesPerPacket; // AAC一帧是1024个字节
     
     const OSType subtype = kAudioFormatMPEG4AAC;
     AudioClassDescription requestedCodecs[2] = {

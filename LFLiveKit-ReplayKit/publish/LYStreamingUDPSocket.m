@@ -437,7 +437,7 @@ NSInteger const kMaxKeepaliveTimeInterval = 5;
 - (ly_audio_t)_audioInfo {
     ly_audio_t audioT;
     memset(&audioT, 0, sizeof(ly_audio_t));
-    audioT.bit_per_sample = 16;
+    audioT.bit_per_sample = self.stream.audioConfiguration.bitsPerChannel;
     audioT.sample_frequency = self.stream.audioConfiguration.audioSampleRate;
     audioT.num_channels = self.stream.audioConfiguration.numberOfChannels;
     return audioT;

@@ -53,8 +53,15 @@ NSInteger const kSendRequestMediaServerTag = 0xe2;
 
         [self initReachability];
         [self initUdpSocket];
+        [self addNotifications];
     }
     return self;
+}
+
+- (void)dealloc
+{
+    [self closeUdpSocket];
+    [self removeNotifications];
 }
 
 - (void)initReachability
@@ -74,6 +81,68 @@ NSInteger const kSendRequestMediaServerTag = 0xe2;
     _udpSocket = [[GCDAsyncUdpSocket alloc] initWithDelegate:self delegateQueue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)];
     [_udpSocket setIPv4Enabled:YES];
     [_udpSocket setIPv6Enabled:YES];
+}
+
+- (void)addNotifications
+{
+    [NSNotificationCenter.defaultCenter addObserver:self
+                                           selector:@selector(applicationDidBecomeActive)
+                                               name:UIApplicationDidBecomeActiveNotification
+                                             object:nil];
+    
+    [NSNotificationCenter.defaultCenter addObserver:self
+                                           selector:@selector(applicationWillEnterForeground)
+                                               name:UIApplicationWillEnterForegroundNotification
+                                             object:nil];
+    
+    [NSNotificationCenter.defaultCenter addObserver:self
+                                           selector:@selector(applicationWillResignActive)
+                                               name:UIApplicationWillResignActiveNotification
+                                             object:nil];
+    
+    [NSNotificationCenter.defaultCenter addObserver:self
+                                           selector:@selector(applicationDidEnterBackground)
+                                               name:UIApplicationDidEnterBackgroundNotification
+                                             object:nil];
+
+}
+
+- (void)removeNotifications
+{
+    [NSNotificationCenter.defaultCenter removeObserver:self
+                                                  name:UIApplicationDidBecomeActiveNotification
+                                                object:nil];
+    [NSNotificationCenter.defaultCenter removeObserver:self
+                                                  name:UIApplicationWillEnterForegroundNotification
+                                                object:nil];
+    [NSNotificationCenter.defaultCenter removeObserver:self
+                                                  name:UIApplicationWillResignActiveNotification
+                                                object:nil];
+    [NSNotificationCenter.defaultCenter removeObserver:self
+                                                  name:UIApplicationDidEnterBackgroundNotification
+                                                object:nil];
+}
+
+#pragma mark - UIApplication Notifications
+
+- (void)applicationWillEnterForeground
+{
+    
+}
+
+- (void)applicationDidBecomeActive
+{
+    [self searchServerAddress];
+}
+
+- (void)applicationWillResignActive
+{
+
+}
+
+- (void)applicationDidEnterBackground
+{
+
 }
 
 #pragma mark - UDP Socket
@@ -135,9 +204,9 @@ NSInteger const kSendRequestMediaServerTag = 0xe2;
     request.height = _videoConfiguration.videoSize.height;
     request.video_fps = _videoConfiguration.videoFrameRate;
     request.sample_frequency = _audioConfiguration.audioSampleRate;
-    request.bit_per_sample = 16;
+    request.bit_per_sample = _audioConfiguration.bitsPerChannel;
     request.num_channels = _audioConfiguration.numberOfChannels;
-    request.audio_fps = _audioConfiguration.audioSampleRate / 1024;
+    request.audio_fps = _audioConfiguration.audioSampleRate / _audioConfiguration.framesPerPacket;
     memcpy(request.name, UIDevice.currentDevice.name.UTF8String, sizeof(request.name));
     
     NSData *requestData = [NSData dataWithBytes:&request length:sizeof(request)];
@@ -227,7 +296,7 @@ NSInteger const kSendRequestMediaServerTag = 0xe2;
         
         if (searchRespond.magic == LY_SEARCH_CMD) {
             // 广播搜索投屏服务的IP及端口响应
-            self.ipAddress = [LYUtils ipStringWithAddress:searchRespond.addr];// [GCDAsyncUdpSocket hostFromAddress:address];
+            self.ipAddress = [LYUtils ipStringWithAddress:searchRespond.addr]; // [GCDAsyncUdpSocket hostFromAddress:address];
             self.port = searchRespond.port;
 
             if (_needRequest) {
