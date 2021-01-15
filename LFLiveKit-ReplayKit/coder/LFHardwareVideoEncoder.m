@@ -11,6 +11,15 @@
 
 #define LFUseAnnexBStyle 0
 
+@interface LFHardwareVideoExtInfo : NSObject
+@property (assign, nonatomic) uint32_t frameNumber;
+@property (assign, nonatomic) uint64_t timeStamp;
+@property (assign, nonatomic) CGImagePropertyOrientation videoOrientation;
+@end
+
+@implementation LFHardwareVideoExtInfo
+@end
+
 @interface LFHardwareVideoEncoder (){
     VTCompressionSessionRef compressionSession;
     NSInteger frameCount;
@@ -171,7 +180,7 @@
 
 #pragma mark - LFVideoEncoder
 
-- (void)encodeVideoData:(CVPixelBufferRef)pixelBuffer timeStamp:(uint64_t)timeStamp {
+- (void)encodeVideoData:(CVPixelBufferRef)pixelBuffer timeStamp:(uint64_t)timeStamp videoOrientation:(CGImagePropertyOrientation)videoOrientation {
     if(_isBackGround) return;
     frameCount++;
     if (!compressionSession) {
@@ -184,9 +193,12 @@
     if (frameCount % (int32_t)_configuration.videoMaxKeyframeInterval == 0) {
         properties = @{(__bridge NSString *)kVTEncodeFrameOptionKey_ForceKeyFrame: @YES};
     }
-    NSNumber *timeNumber = @(timeStamp);
-
-    OSStatus status = VTCompressionSessionEncodeFrame(compressionSession, pixelBuffer, presentationTimeStamp, duration, (__bridge CFDictionaryRef)properties, (__bridge_retained void *)timeNumber, &flags);
+    LFHardwareVideoExtInfo *videoExtInfo = [[LFHardwareVideoExtInfo alloc] init];
+    videoExtInfo.timeStamp = timeStamp;
+    videoExtInfo.videoOrientation = videoOrientation;
+    videoExtInfo.frameNumber = _frameNumber++;
+    
+    OSStatus status = VTCompressionSessionEncodeFrame(compressionSession, pixelBuffer, presentationTimeStamp, duration, (__bridge CFDictionaryRef)properties, (__bridge_retained void *)videoExtInfo, &flags);
     if(status != noErr){
         NSLog(@"status != noErr, %d", status);
         [self resetCompressionSession];
@@ -212,6 +224,42 @@
     _isBackGround = NO;
 }
 
+- (CGFloat)getRotateByImageOrientation:(CGImagePropertyOrientation)orientation {
+   CGFloat rotate = 0;
+    switch (orientation) {
+            // 竖屏时候
+            // SDK内部会做图像大小自适配(不会变形) 所以上层只要控制横屏时候的影像旋转的问题
+        case kCGImagePropertyOrientationUp:{
+            rotate = 0;
+            NSLog(@"---->>>>sampleBuffer: kCGImagePropertyOrientationUp");
+
+        }
+            break;
+        case kCGImagePropertyOrientationDown:{
+            rotate = 180;
+            NSLog(@"---->>>>sampleBuffer: kCGImagePropertyOrientationDown");
+
+            break;
+        }
+        case kCGImagePropertyOrientationLeft: {
+            // 静音键那边向上 所需转90度
+            NSLog(@"---->>>>sampleBuffer: kCGImagePropertyOrientationLeft");
+
+            rotate = 90;
+        }
+            break;
+        case kCGImagePropertyOrientationRight:{
+            // 关机键那边向上 所需转270
+            NSLog(@"---->>>>sampleBuffer: kCGImagePropertyOrientationRight");
+            rotate = 270;
+        }
+            break;
+        default:
+            break;
+    }
+    return rotate;
+}
+
 #pragma mark - VideoCallBack
 static void VideoCompressonOutputCallback(void *VTref, void *VTFrameRef, OSStatus status, VTEncodeInfoFlags infoFlags, CMSampleBufferRef sampleBuffer){
     if (!sampleBuffer) return;
@@ -221,13 +269,20 @@ static void VideoCompressonOutputCallback(void *VTref, void *VTFrameRef, OSStatu
     if (!dic) return;
 
     BOOL keyframe = !CFDictionaryContainsKey(dic, kCMSampleAttachmentKey_NotSync);
-    uint64_t timeStamp = [((__bridge_transfer NSNumber *)VTFrameRef) longLongValue];
+    
+    LFHardwareVideoExtInfo *videoExtInfo = ((__bridge_transfer LFHardwareVideoExtInfo *)VTFrameRef);
+    
+    uint64_t timeStamp = videoExtInfo.timeStamp;
+    uint32_t videoOrientation = videoExtInfo.videoOrientation;
+    uint32_t frameNumber = videoExtInfo.frameNumber;
 
     LFHardwareVideoEncoder *videoEncoder = (__bridge LFHardwareVideoEncoder *)VTref;
     if (status != noErr) {
         return;
     }
 
+    [videoEncoder getRotateByImageOrientation:videoExtInfo.videoOrientation];
+    
     if (keyframe && !videoEncoder->sps) {
         CMFormatDescriptionRef format = CMSampleBufferGetFormatDescription(sampleBuffer);
 
@@ -306,7 +361,6 @@ static void VideoCompressonOutputCallback(void *VTref, void *VTFrameRef, OSStatu
             NALUnitLength = CFSwapInt32BigToHost(NALUnitLength);
 
             LFVideoFrame *videoFrame = [LFVideoFrame new];
-            videoFrame.timestamp = timeStamp;
             NSData *rawVideoData = [[NSData alloc] initWithBytes:(dataPointer + bufferOffset + AVCCHeaderLength) length:NALUnitLength];
 #if LFUseAnnexBStyle
             NSMutableData *frameData = [[NSMutableData alloc] init];
@@ -341,8 +395,10 @@ static void VideoCompressonOutputCallback(void *VTref, void *VTFrameRef, OSStatu
             videoFrame.vps = videoEncoder->vps;
             videoFrame.sps = videoEncoder->sps;
             videoFrame.pps = videoEncoder->pps;
-            videoFrame.frameNumber = videoEncoder.frameNumber;
-            videoEncoder.frameNumber += 1;
+            
+            videoFrame.timestamp = timeStamp;
+            videoFrame.frameNumber = frameNumber;
+            videoFrame.videoOrientation = videoOrientation;
             
             if (videoEncoder.encoderDelegate && [videoEncoder.encoderDelegate respondsToSelector:@selector(videoEncoder:videoFrame:)]) {
                 [videoEncoder.encoderDelegate videoEncoder:videoEncoder videoFrame:videoFrame];

@@ -108,16 +108,14 @@
 }
 
 - (void)pushVideoBuffer:(CMSampleBufferRef)sampleBuffer {
-    CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
-    
-//    NSLog(@"pixelBuffer size %@", NSStringFromCGSize(CVImageBufferGetDisplaySize(pixelBuffer)));
-    
-    [self pushVideo:pixelBuffer];
+    [self pushVideoBuffer:sampleBuffer videoOrientation:kCGImagePropertyOrientationUp];
 }
 
-- (void)pushVideo:(nullable CVPixelBufferRef)pixelBuffer{
+- (void)pushVideoBuffer:(CMSampleBufferRef)sampleBuffer videoOrientation:(uint32_t)videoOrientation {
+    CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+//    NSLog(@"pixelBuffer size %@", NSStringFromCGSize(CVImageBufferGetDisplaySize(pixelBuffer)));
     if(self.captureType & LFLiveInputMaskVideo){
-        if (self.uploading) [self.videoEncoder encodeVideoData:pixelBuffer timeStamp:NOW];
+        if (self.uploading) [self.videoEncoder encodeVideoData:pixelBuffer timeStamp:NOW videoOrientation:videoOrientation];
     }
 }
 

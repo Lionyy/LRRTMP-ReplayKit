@@ -12,6 +12,8 @@
 
 @property (nonatomic, assign) uint32_t frameNumber;
 @property (nonatomic, assign) uint64_t timestamp;
+/// CGImagePropertyOrientation
+@property (nonatomic, assign) uint32_t videoOrientation;
 
 @property (nonatomic, strong) NSData *data;
 ///< flv或者rtmp包头

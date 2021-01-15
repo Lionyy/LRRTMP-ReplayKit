@@ -100,6 +100,9 @@ typedef NS_ENUM(NSInteger, LFLiveCaptureTypeMask) {
 /** publish video data from CMSampleBufferRef  */
 - (void)pushVideoBuffer:(CMSampleBufferRef)sampleBuffer;
 
+/** publish video data from CMSampleBufferRef, videoOrientation 视频方向  */
+- (void)pushVideoBuffer:(CMSampleBufferRef)sampleBuffer videoOrientation:(uint32_t)videoOrientation;
+
 /** publish audio data CMSampleBufferRef */
 - (void)pushAudioBuffer:(CMSampleBufferRef)sampleBuffer;
 

@@ -122,7 +122,7 @@
     _h264Delegate = delegate;
 }
 
-- (void)encodeVideoData:(CVPixelBufferRef)pixelBuffer timeStamp:(uint64_t)timeStamp {
+- (void)encodeVideoData:(CVPixelBufferRef)pixelBuffer timeStamp:(uint64_t)timeStamp videoOrientation:(CGImagePropertyOrientation)videoOrientation {
   
     CVPixelBufferLockBaseAddress(pixelBuffer, 0);
     CMVideoFormatDescriptionRef videoInfo = NULL;

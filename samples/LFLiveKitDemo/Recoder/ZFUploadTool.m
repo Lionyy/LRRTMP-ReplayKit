@@ -9,6 +9,7 @@
 #import "ZFUploadTool.h"
 #import "LYUtils.h"
 #import <LFLiveKit.h>
+#import <ReplayKit/ReplayKit.h>
 
 @interface ZFUploadTool () <LFLiveSessionDelegate>
 
@@ -65,8 +66,32 @@
         _session.delegate = self;
         _session.showDebugInfo = YES;
         
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(statusBarChanged:)
+                                                     name:UIApplicationWillChangeStatusBarOrientationNotification
+                                                   object:nil];
     }
     return _session;
+}
+
+- (void)statusBarChanged:(NSNotification *)notification
+{
+    UIInterfaceOrientation orientation = (UIInterfaceOrientation)[[notification.userInfo objectForKey:UIApplicationStatusBarOrientationUserInfoKey] integerValue];
+    NSLog(@"---->>>>notification.userInfo: %@", notification.userInfo);
+
+    if (orientation == UIInterfaceOrientationLandscapeLeft) {
+        NSLog(@"---->>>>statusBarChanged: UIInterfaceOrientationLandscapeLeft");
+        
+    } else if (orientation == UIInterfaceOrientationLandscapeRight) {
+        NSLog(@"---->>>>statusBarChanged: UIInterfaceOrientationLandscapeRight");
+
+    } else if (orientation == UIInterfaceOrientationPortrait) {
+        NSLog(@"---->>>>statusBarChanged: UIInterfaceOrientationPortrait");
+
+    } else if (orientation == UIInterfaceOrientationPortraitUpsideDown) {
+        NSLog(@"---->>>>statusBarChanged: UIInterfaceOrientationPortrait");
+
+    }
 }
 
 -(void)stop {
@@ -78,11 +103,26 @@
     if (_mic) {
         [self.session pushAudioBuffer:sampleBuffer];
     }
-    NSLog(@"--->>> Screen Bounds: %@", NSStringFromCGRect(UIScreen.mainScreen.bounds));
 }
 
 - (void)sendVideoBuffer:(CMSampleBufferRef)sampleBuffer {
-    [self.session pushVideoBuffer:sampleBuffer];
+    [self.session pushVideoBuffer:sampleBuffer videoOrientation:[self getSampleOrientationByBuffer:sampleBuffer]];
+}
+
+- (CGImagePropertyOrientation)getSampleOrientationByBuffer:(CMSampleBufferRef)sampleBuffer {
+    CGImagePropertyOrientation orientation = kCGImagePropertyOrientationUp;
+    if (@available(iOS 11.1, *)) {
+        /*
+         1.1以上支持自动旋转
+         IOS 11.0系统 编译RPVideoSampleOrientationKey会bad_address
+         Replaykit bug：api说ios 11 支持RPVideoSampleOrientationKey 但是 却存在bad_address的情况 代码编译执行会报错bad_address 即使上面@available(iOS 11.1, *)也无效
+         解决方案：Link Binary With Libraries  -->Replaykit  Request-->Option
+        */
+        CFStringRef RPVideoSampleOrientationKeyRef = (__bridge CFStringRef)RPVideoSampleOrientationKey;
+        NSNumber *orientationNum = (NSNumber *)CMGetAttachment(sampleBuffer, RPVideoSampleOrientationKeyRef,NULL);
+        orientation = (CGImagePropertyOrientation)orientationNum.integerValue;
+    }
+    return orientation;
 }
 
 #pragma mark -- LFStreamingSessionDelegate

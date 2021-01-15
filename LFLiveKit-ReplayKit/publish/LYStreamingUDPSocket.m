@@ -443,4 +443,39 @@ NSInteger const kMaxKeepaliveTimeInterval = 5;
     return audioT;
 }
 
+- (CGFloat)getRotateByImageOrientation:(CGImagePropertyOrientation)orientation {
+   CGFloat rotate = 0;
+    switch (orientation) {
+            // 竖屏时候
+            // SDK内部会做图像大小自适配(不会变形) 所以上层只要控制横屏时候的影像旋转的问题
+        case kCGImagePropertyOrientationUp:{
+            rotate = 0;
+            NSLog(@"---->>>>sampleBuffer: kCGImagePropertyOrientationUp");
+
+        }
+            break;
+        case kCGImagePropertyOrientationDown:{
+            rotate = 180;
+            NSLog(@"---->>>>sampleBuffer: kCGImagePropertyOrientationDown");
+
+            break;
+        }
+        case kCGImagePropertyOrientationLeft: {
+            // 静音键那边向上 所需转90度
+            NSLog(@"---->>>>sampleBuffer: kCGImagePropertyOrientationLeft");
+
+            rotate = 90;
+        }
+            break;
+        case kCGImagePropertyOrientationRight:{
+            // 关机键那边向上 所需转270
+            NSLog(@"---->>>>sampleBuffer: kCGImagePropertyOrientationRight");
+            rotate = 270;
+        }
+            break;
+        default:
+            break;
+    }
+    return rotate;
+}
 @end
