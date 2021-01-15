@@ -90,7 +90,7 @@
     
     if (@available(iOS 12.0, *)) {
         RPSystemBroadcastPickerView *broadcastPicker = [[RPSystemBroadcastPickerView alloc] initWithFrame:_pickerView.bounds];
-        broadcastPicker.preferredExtension = @"com.rl.mobile.Recoder";
+        broadcastPicker.preferredExtension = @"com.roy.recoderDemo.Recoder";
         [_pickerView addSubview:broadcastPicker];
     }
 
@@ -112,8 +112,7 @@
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
-    
-    [_udpSession searchServerAddress];
+//    [_udpSession searchServerAddress];
 }
 
 #pragma mark -- Getter Setter
@@ -165,13 +164,13 @@
 
 - (void)perpare {
         
-    [_udpSession requestMediaServerIPAndPort];
+//    [_udpSession requestMediaServerIPAndPort];
 
-//    LFLiveStreamInfo *stream = [LFLiveStreamInfo new];
-//    // 直播推流地址
-//    stream.url = @"rtmp://192.168.45.174/live/123";
-//    [self.session startLive:stream];
-//    [[RPScreenRecorder sharedRecorder] setMicrophoneEnabled:YES];
+    LFLiveStreamInfo *stream = [LFLiveStreamInfo new];
+    // 直播推流地址
+    stream.url = @"rtmp://192.168.44.90/live/123";
+    [self.session startLive:stream];
+    [[RPScreenRecorder sharedRecorder] setMicrophoneEnabled:YES];
 }
 
 - (void)statrButtonClick:(UIButton *)sender {

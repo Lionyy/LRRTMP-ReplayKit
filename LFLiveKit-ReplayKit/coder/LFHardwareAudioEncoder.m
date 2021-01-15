@@ -8,7 +8,7 @@
 
 #import "LFHardwareAudioEncoder.h"
 
-#define LFUseAACADTSHeader 1
+#define LFUseAACADTSHeader 0
 
 @interface LFHardwareAudioEncoder (){
     AudioConverterRef m_converter;

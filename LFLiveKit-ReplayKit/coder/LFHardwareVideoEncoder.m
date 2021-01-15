@@ -9,7 +9,7 @@
 #import <VideoToolbox/VideoToolbox.h>
 #import <AVFoundation/AVFoundation.h>
 
-#define LFUseAnnexBStyle 1
+#define LFUseAnnexBStyle 0
 
 @interface LFHardwareVideoEncoder (){
     VTCompressionSessionRef compressionSession;

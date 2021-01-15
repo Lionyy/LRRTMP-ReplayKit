@@ -9,7 +9,7 @@
 #import "LFLiveSession.h"
 #import "LFHardwareVideoEncoder.h"
 #import "LFHardwareAudioEncoder.h"
-#import "LYStreamingUDPSocket.h"
+#import "LFStreamRTMPSocket.h"
 #import "LFLiveStreamInfo.h"
 
 @interface LFLiveSession ()<LFAudioEncodingDelegate, LFVideoEncodingDelegate, LFStreamSocketDelegate>
@@ -243,7 +243,7 @@
 
 - (id<LFStreamSocket>)socket {
     if (!_socket) {
-        _socket = [[LYStreamingUDPSocket alloc] initWithStream:self.streamInfo];
+        _socket = [[LFStreamRTMPSocket alloc] initWithStream:self.streamInfo];
         [_socket setDelegate:self];
     }
     return _socket;

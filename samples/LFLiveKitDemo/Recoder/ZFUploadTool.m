@@ -37,7 +37,7 @@
     _mic = YES;
     _frameQuality = [dict[@"frameQuality"] intValue]; // 0 高 1中 2低
     if (!_url) {
-        _url = @"rtmp://192.168.45.174/live/123";
+        _url = @"rtmp://192.168.44.90/live/123";
     }
     [self lf];
 }
@@ -78,7 +78,7 @@
     if (_mic) {
         [self.session pushAudioBuffer:sampleBuffer];
     }
-    
+    NSLog(@"--->>> Screen Bounds: %@", NSStringFromCGRect(UIScreen.mainScreen.bounds));
 }
 
 - (void)sendVideoBuffer:(CMSampleBufferRef)sampleBuffer {
