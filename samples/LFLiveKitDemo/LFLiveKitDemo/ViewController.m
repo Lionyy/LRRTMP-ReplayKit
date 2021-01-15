@@ -115,6 +115,22 @@
 //    [_udpSession searchServerAddress];
 }
 
+- (CGImagePropertyOrientation)getSampleOrientationByBuffer:(CMSampleBufferRef)sampleBuffer {
+    CGImagePropertyOrientation orientation = kCGImagePropertyOrientationUp;
+    if (@available(iOS 11.1, *)) {
+        /*
+         11.1以上支持自动旋转
+         IOS 11.0系统 编译RPVideoSampleOrientationKey会bad_address
+         Replaykit bug：api说ios 11 支持RPVideoSampleOrientationKey 但是 却存在bad_address的情况 代码编译执行会报错bad_address 即使上面@available(iOS 11.1, *)也无效
+         解决方案：Link Binary With Libraries  -->Replaykit  Request-->Option
+        */
+        CFStringRef RPVideoSampleOrientationKeyRef = (__bridge CFStringRef)RPVideoSampleOrientationKey;
+        NSNumber *orientationNum = (NSNumber *)CMGetAttachment(sampleBuffer, RPVideoSampleOrientationKeyRef,NULL);
+        orientation = (CGImagePropertyOrientation)orientationNum.integerValue;
+    }
+    return orientation;
+}
+
 #pragma mark -- Getter Setter
 - (LFLiveSession *)session {
     if (_session == nil) {
@@ -128,7 +144,6 @@
     }
     return _session;
 }
-
 
 - (void)liveSession:(nullable LFLiveSession *)session liveStateDidChange:(LFLiveState)state {
     switch (state) {
@@ -195,7 +210,7 @@
 //                NSLog(@"bufferTyped:%ld", (long)bufferType);
                 switch (bufferType) {
                     case RPSampleBufferTypeVideo:
-                        [self.session pushVideoBuffer:sampleBuffer];
+                        [self.session pushVideoBuffer:sampleBuffer videoOrientation:[self getSampleOrientationByBuffer:sampleBuffer]];
                         break;
                     case RPSampleBufferTypeAudioMic:
                         [self.session pushAudioBuffer:sampleBuffer];
