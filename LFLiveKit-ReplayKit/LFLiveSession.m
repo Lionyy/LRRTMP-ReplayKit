@@ -126,13 +126,13 @@
     [self pushVideoBuffer:sampleBuffer videoOrientation:kCGImagePropertyOrientationUp];
 }
 
-//- (void)pushVideoBuffer:(CMSampleBufferRef)sampleBuffer videoOrientation:(uint32_t)videoOrientation {
-//    CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
-////    NSLog(@"pixelBuffer size %@", NSStringFromCGSize(CVImageBufferGetDisplaySize(pixelBuffer)));
-//    if(self.captureType & LFLiveInputMaskVideo){
-//        if (self.uploading) [self.videoEncoder encodeVideoData:pixelBuffer timeStamp:NOW videoOrientation:videoOrientation];
-//    }
-//}
+- (void)pushVideoBuffer:(CMSampleBufferRef)sampleBuffer videoOrientation:(uint32_t)videoOrientation {
+    CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+//    NSLog(@"pixelBuffer size %@", NSStringFromCGSize(CVImageBufferGetDisplaySize(pixelBuffer)));
+    if(self.captureType & LFLiveInputMaskVideo){
+        if (self.uploading) [self.videoEncoder encodeVideoData:pixelBuffer timeStamp:NOW videoOrientation:videoOrientation];
+    }
+}
 
 - (void)pushAudio:(nullable NSData*)audioData{
     if(self.captureType & LFLiveInputMaskAudio){
@@ -361,7 +361,7 @@ void freePixelBufferDataAfterRelease(void *releaseRefCon, const void *baseAddres
     return rotatedBuffer;
 }
 
-- (void)pushVideoBuffer:(CMSampleBufferRef)sampleBuffer videoOrientation:(uint32_t)videoOrientation {
+- (void)newPushVideoBuffer:(CMSampleBufferRef)sampleBuffer videoOrientation:(uint32_t)videoOrientation {
     
     CGImagePropertyOrientation cgOrientation = videoOrientation;
     uint8_t rotationConstant = 0;

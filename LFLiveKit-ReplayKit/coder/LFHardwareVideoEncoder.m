@@ -6,8 +6,11 @@
 //  Copyright © 2016年 LaiFeng All rights reserved.
 //
 #import "LFHardwareVideoEncoder.h"
+#import "RYPixcelBufferHandler.h"
+
 #import <VideoToolbox/VideoToolbox.h>
 #import <AVFoundation/AVFoundation.h>
+#import <Accelerate/Accelerate.h>
 
 #define LFUseAnnexBStyle 0
 
@@ -37,6 +40,7 @@
 @property (nonatomic, weak) id<LFVideoEncodingDelegate> encoderDelegate;
 @property (nonatomic) NSInteger currentVideoBitRate;
 @property (nonatomic) BOOL isBackGround;
+@property (nonatomic, strong) RYPixcelBufferHandler * pixcelBufferHandler;
 @end
 
 @implementation LFHardwareVideoEncoder
@@ -46,6 +50,7 @@
     if (self = [super init]) {
         NSLog(@"USE LFHardwareVideoEncoder");
         _configuration = configuration;
+        _pixcelBufferHandler = [[RYPixcelBufferHandler alloc] init];
         if (_configuration.encoderType == LFVideoH265Encoder) {
             if ([[AVAssetExportSession allExportPresets] containsObject:AVAssetExportPresetHEVCHighestQuality] &&
                 VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC)) {
@@ -209,10 +214,10 @@
 
 #pragma mark - LFVideoEncoder
 
-- (void)encodeVideoData:(CVPixelBufferRef)pixelBuffer timeStamp:(uint64_t)timeStamp videoOrientation:(CGImagePropertyOrientation)videoOrientation {
+- (void)encodeVideoData:(nullable CVPixelBufferRef)pixelBuffer timeStamp:(uint64_t)timeStamp videoOrientation:(CGImagePropertyOrientation)videoOrientation {
     if(_isBackGround) return;
     frameCount++;
-    if (!portraitCompressionSession && !landCompressionSession) {
+    if (!portraitCompressionSession) {
         return;
     }
     CMTime presentationTimeStamp = CMTimeMake(frameCount, (int32_t)_configuration.videoFrameRate);
@@ -222,19 +227,47 @@
     if (frameCount % (int32_t)_configuration.videoMaxKeyframeInterval == 0) {
         properties = @{(__bridge NSString *)kVTEncodeFrameOptionKey_ForceKeyFrame: @YES};
     }
+    
     LFHardwareVideoExtInfo *videoExtInfo = [[LFHardwareVideoExtInfo alloc] init];
     videoExtInfo.timeStamp = timeStamp;
     videoExtInfo.videoOrientation = videoOrientation;
     videoExtInfo.frameNumber = frameCount;
-    
-    VTCompressionSessionRef compressionSession = portraitCompressionSession;
-    if (videoOrientation == kCGImagePropertyOrientationLeft || videoOrientation == kCGImagePropertyOrientationRight) {
-        compressionSession = landCompressionSession;
+
+    uint8_t rotationConstant = kRotate0DegreesClockwise;
+    switch (videoOrientation) {
+        case kCGImagePropertyOrientationUp:
+            rotationConstant = kRotate0DegreesClockwise;
+            break;
+        case kCGImagePropertyOrientationLeft:
+            rotationConstant = kRotate90DegreesClockwise;
+            break;
+        case kCGImagePropertyOrientationDown:
+            rotationConstant = kRotate180DegreesClockwise;
+            break;
+        case kCGImagePropertyOrientationRight:
+            rotationConstant = kRotate270DegreesClockwise;
+            break;
+        default:
+            break;
     }
-    OSStatus status = VTCompressionSessionEncodeFrame(compressionSession, pixelBuffer, presentationTimeStamp, duration, (__bridge CFDictionaryRef)properties, (__bridge_retained void *)videoExtInfo, &flags);
+    
+    CVPixelBufferRef rotatePixelBuffer = [_pixcelBufferHandler rotatePixelBuffer:pixelBuffer videoOrientation:videoOrientation];
+    const size_t width = CVPixelBufferGetWidth(rotatePixelBuffer);
+    const size_t height = CVPixelBufferGetHeight(rotatePixelBuffer);
+    
+    if (_configuration.videoSize.width != width || _configuration.videoSize.height != height) {
+        _configuration.videoSize = CGSizeMake(width, height);
+        [self resetCompressionSession:&portraitCompressionSession];
+    }
+    
+    OSStatus status = VTCompressionSessionEncodeFrame(portraitCompressionSession, pixelBuffer, presentationTimeStamp, duration, (__bridge CFDictionaryRef)properties, (__bridge_retained void *)videoExtInfo, &flags);
     if(status != noErr){
         NSLog(@"status != noErr, %d", status);
-        [self resetCompressionSession:&compressionSession];
+        [self resetCompressionSession:&portraitCompressionSession];
+    }
+    
+    if (rotatePixelBuffer != pixelBuffer) {
+        CVPixelBufferRelease(rotatePixelBuffer);
     }
 }
 
