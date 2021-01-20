@@ -21,7 +21,9 @@
 @end
 
 @interface LFHardwareVideoEncoder (){
-    VTCompressionSessionRef compressionSession;
+    VTCompressionSessionRef portraitCompressionSession;
+    VTCompressionSessionRef landCompressionSession;
+    
     NSInteger frameCount;
     NSData *vps;
     NSData *sps;
@@ -35,7 +37,6 @@
 @property (nonatomic, weak) id<LFVideoEncodingDelegate> encoderDelegate;
 @property (nonatomic) NSInteger currentVideoBitRate;
 @property (nonatomic) BOOL isBackGround;
-@property (nonatomic) uint32_t frameNumber;
 @end
 
 @implementation LFHardwareVideoEncoder
@@ -45,7 +46,6 @@
     if (self = [super init]) {
         NSLog(@"USE LFHardwareVideoEncoder");
         _configuration = configuration;
-        _frameNumber = 0;
         if (_configuration.encoderType == LFVideoH265Encoder) {
             if ([[AVAssetExportSession allExportPresets] containsObject:AVAssetExportPresetHEVCHighestQuality] &&
                 VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC)) {
@@ -54,7 +54,9 @@
                 _configuration.encoderType = LFVideoH264Encoder;
             }
         }
-        [self resetCompressionSession];
+        [self resetCompressionSession:&portraitCompressionSession];
+        [self resetCompressionSession:&landCompressionSession];
+
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(willEnterBackground:) name:UIApplicationWillResignActiveNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(willEnterForeground:) name:UIApplicationDidBecomeActiveNotification object:nil];
 #ifdef DEBUG
@@ -67,14 +69,22 @@
 }
 
 - (void)dealloc {
-    if (compressionSession != NULL) {
-        VTCompressionSessionCompleteFrames(compressionSession, kCMTimeInvalid);
 
-        VTCompressionSessionInvalidate(compressionSession);
-        CFRelease(compressionSession);
-        compressionSession = NULL;
-    }
+    [self releaseCompressionSession:&portraitCompressionSession];
+    [self releaseCompressionSession:&landCompressionSession];
+
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)releaseCompressionSession:(VTCompressionSessionRef *)compressionSession
+{
+    if (*compressionSession != NULL) {
+        VTCompressionSessionCompleteFrames(*compressionSession, kCMTimeInvalid);
+
+        VTCompressionSessionInvalidate(*compressionSession);
+        CFRelease(*compressionSession);
+        *compressionSession = NULL;
+    }
 }
 
 - (BOOL)isSupportPropertyWithSession:(VTCompressionSessionRef)session key:(CFStringRef)key {
@@ -90,16 +100,16 @@
     return isSupport;
 }
 
-- (void)resetCompressionSession {
+- (void)resetCompressionSession:(VTCompressionSessionRef *)compressionSession {
     if (inResetting) {
         return;
     }
     inResetting = YES;
-    if (compressionSession) {
-        VTCompressionSessionCompleteFrames(compressionSession, kCMTimeInvalid);
-        VTCompressionSessionInvalidate(compressionSession);
-        CFRelease(compressionSession);
-        compressionSession = NULL;
+    if (*compressionSession) {
+        VTCompressionSessionCompleteFrames(*compressionSession, kCMTimeInvalid);
+        VTCompressionSessionInvalidate(*compressionSession);
+        CFRelease(*compressionSession);
+        *compressionSession = NULL;
     }
     
     CMVideoCodecType codecType = kCMVideoCodecType_H264;
@@ -108,14 +118,29 @@
     }else if (_configuration.encoderType == LFVideoH265Encoder) {
         codecType = kCMVideoCodecType_HEVC;
     }
+     
+    CGSize videoSize = _configuration.videoSize;
+    if (*compressionSession == landCompressionSession) {
+        videoSize = CGSizeMake(MAX(videoSize.width, videoSize.height), MIN(videoSize.width, videoSize.height));
+    }else {
+        videoSize = CGSizeMake(MIN(videoSize.width, videoSize.height), MAX(videoSize.width, videoSize.height));
+    }
     
-    OSStatus status = VTCompressionSessionCreate(NULL, _configuration.videoSize.width, _configuration.videoSize.height, codecType, NULL, NULL, NULL, VideoCompressonOutputCallback, (__bridge void *)self, &compressionSession);
+    OSStatus status = VTCompressionSessionCreate(NULL, videoSize.width, videoSize.height, codecType, NULL, NULL, NULL, VideoCompressonOutputCallback, (__bridge void *)self, compressionSession);
     if (status != noErr) {
         return;
     }
 
     _currentVideoBitRate = _configuration.videoBitRate;
     
+    [self settingCompressionProperties:*compressionSession];
+    
+    VTCompressionSessionPrepareToEncodeFrames(*compressionSession);
+    inResetting = NO;
+}
+
+- (void)settingCompressionProperties:(VTCompressionSessionRef)compressionSession
+{
     if ([self isSupportPropertyWithSession:compressionSession key:kVTCompressionPropertyKey_MaxKeyFrameInterval]) {
         VTSessionSetProperty(compressionSession,
                              kVTCompressionPropertyKey_MaxKeyFrameInterval,
@@ -155,13 +180,9 @@
     }else if (_configuration.encoderType == LFVideoH265Encoder) {
         VTSessionSetProperty(compressionSession, kVTCompressionPropertyKey_ProfileLevel, kVTProfileLevel_HEVC_Main_AutoLevel);
     }
-    
-    VTCompressionSessionPrepareToEncodeFrames(compressionSession);
-    inResetting = NO;
 }
 
-- (void)setVideoBitRate:(NSInteger)videoBitRate {
-    if(_isBackGround) return;
+- (void)setVideoBitRate:(NSInteger)videoBitRate compressionSession:(VTCompressionSessionRef)compressionSession {
     
     if ([self isSupportPropertyWithSession:compressionSession key:kVTCompressionPropertyKey_AverageBitRate]) {
         VTSessionSetProperty(compressionSession, kVTCompressionPropertyKey_AverageBitRate, (__bridge CFTypeRef)@(videoBitRate));
@@ -171,6 +192,14 @@
         NSArray *limit = @[@(videoBitRate * 1.5/8), @(1)];
         VTSessionSetProperty(compressionSession, kVTCompressionPropertyKey_DataRateLimits, (__bridge CFArrayRef)limit);
     }
+}
+
+- (void)setVideoBitRate:(NSInteger)videoBitRate {
+    if(_isBackGround) return;
+    
+    [self setVideoBitRate:videoBitRate compressionSession:portraitCompressionSession];
+    [self setVideoBitRate:videoBitRate compressionSession:landCompressionSession];
+
     _currentVideoBitRate = videoBitRate;
 }
 
@@ -183,7 +212,7 @@
 - (void)encodeVideoData:(CVPixelBufferRef)pixelBuffer timeStamp:(uint64_t)timeStamp videoOrientation:(CGImagePropertyOrientation)videoOrientation {
     if(_isBackGround) return;
     frameCount++;
-    if (!compressionSession) {
+    if (!portraitCompressionSession && !landCompressionSession) {
         return;
     }
     CMTime presentationTimeStamp = CMTimeMake(frameCount, (int32_t)_configuration.videoFrameRate);
@@ -196,18 +225,22 @@
     LFHardwareVideoExtInfo *videoExtInfo = [[LFHardwareVideoExtInfo alloc] init];
     videoExtInfo.timeStamp = timeStamp;
     videoExtInfo.videoOrientation = videoOrientation;
-    videoExtInfo.frameNumber = _frameNumber++;
+    videoExtInfo.frameNumber = frameCount;
     
+    VTCompressionSessionRef compressionSession = portraitCompressionSession;
+    if (videoOrientation == kCGImagePropertyOrientationLeft || videoOrientation == kCGImagePropertyOrientationRight) {
+        compressionSession = landCompressionSession;
+    }
     OSStatus status = VTCompressionSessionEncodeFrame(compressionSession, pixelBuffer, presentationTimeStamp, duration, (__bridge CFDictionaryRef)properties, (__bridge_retained void *)videoExtInfo, &flags);
     if(status != noErr){
         NSLog(@"status != noErr, %d", status);
-        [self resetCompressionSession];
+        [self resetCompressionSession:&compressionSession];
     }
 }
 
 - (void)stopEncoder {
-    _frameNumber = 0;
-    VTCompressionSessionCompleteFrames(compressionSession, kCMTimeIndefinite);
+    VTCompressionSessionCompleteFrames(portraitCompressionSession, kCMTimeIndefinite);
+    VTCompressionSessionCompleteFrames(landCompressionSession, kCMTimeIndefinite);
 }
 
 - (void)setDelegate:(id<LFVideoEncodingDelegate>)delegate {
@@ -220,7 +253,9 @@
 }
 
 - (void)willEnterForeground:(NSNotification*)notification {
-    [self resetCompressionSession];
+    [self resetCompressionSession:&portraitCompressionSession];
+    [self resetCompressionSession:&landCompressionSession];
+
     _isBackGround = NO;
 }
 

@@ -183,7 +183,7 @@
 
     LFLiveStreamInfo *stream = [LFLiveStreamInfo new];
     // 直播推流地址
-    stream.url = @"rtmp://192.168.44.90/live/123";
+    stream.url = LY_TEST_RTMP_URL;
     [self.session startLive:stream];
     [[RPScreenRecorder sharedRecorder] setMicrophoneEnabled:YES];
 }

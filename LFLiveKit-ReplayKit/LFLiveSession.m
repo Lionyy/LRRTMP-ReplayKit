@@ -11,6 +11,7 @@
 #import "LFHardwareAudioEncoder.h"
 #import "LFStreamRTMPSocket.h"
 #import "LFLiveStreamInfo.h"
+#import <Accelerate/Accelerate.h>
 
 @interface LFLiveSession ()<LFAudioEncodingDelegate, LFVideoEncodingDelegate, LFStreamSocketDelegate>
 
@@ -55,6 +56,12 @@
 /// 当前是否采集到了关键帧
 @property (nonatomic, assign) BOOL hasKeyFrameVideo;
 
+//@property (nonatomic, strong) CIContext *cicontext;
+
+@property (nonatomic, assign) CGImagePropertyOrientation lastOrientation;
+
+@property (nonatomic, assign) BOOL landscape;
+
 @end
 
 @implementation LFLiveSession
@@ -70,6 +77,7 @@
         _videoConfiguration = videoConfiguration;
         _adaptiveBitrate = NO;
         _captureType = captureType;
+        _lastOrientation = kCGImagePropertyOrientationUp;
     }
     return self;
 }
@@ -111,13 +119,13 @@
     [self pushVideoBuffer:sampleBuffer videoOrientation:kCGImagePropertyOrientationUp];
 }
 
-- (void)pushVideoBuffer:(CMSampleBufferRef)sampleBuffer videoOrientation:(uint32_t)videoOrientation {
-    CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
-//    NSLog(@"pixelBuffer size %@", NSStringFromCGSize(CVImageBufferGetDisplaySize(pixelBuffer)));
-    if(self.captureType & LFLiveInputMaskVideo){
-        if (self.uploading) [self.videoEncoder encodeVideoData:pixelBuffer timeStamp:NOW videoOrientation:videoOrientation];
-    }
-}
+//- (void)pushVideoBuffer:(CMSampleBufferRef)sampleBuffer videoOrientation:(uint32_t)videoOrientation {
+//    CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+////    NSLog(@"pixelBuffer size %@", NSStringFromCGSize(CVImageBufferGetDisplaySize(pixelBuffer)));
+//    if(self.captureType & LFLiveInputMaskVideo){
+//        if (self.uploading) [self.videoEncoder encodeVideoData:pixelBuffer timeStamp:NOW videoOrientation:videoOrientation];
+//    }
+//}
 
 - (void)pushAudio:(nullable NSData*)audioData{
     if(self.captureType & LFLiveInputMaskAudio){
@@ -126,6 +134,286 @@
 }
 
 #pragma mark -- PrivateMethod
+//Rotate  CMSampleBufferRef to landscape
+
+void freePixelBufferDataAfterRelease(void *releaseRefCon, const void *baseAddress)
+{
+    // Free the memory we malloced for the vImage rotation
+    free((void *)baseAddress);
+}
+
+/* rotationConstant:
+ *  0 -- rotate 0 degrees (simply copy the data from src to dest)
+ *  1 -- rotate 90 degrees counterclockwise
+ *  2 -- rotate 180 degress
+ *  3 -- rotate 270 degrees counterclockwise
+ */
+//- (CVPixelBufferRef)rotateBuffer:(CMSampleBufferRef)sampleBuffer withConstant:(uint8_t)rotationConstant
+//{
+//    CVImageBufferRef imageBuffer        = CMSampleBufferGetImageBuffer(sampleBuffer);
+//    CVPixelBufferLockBaseAddress(imageBuffer, 0);
+//
+//    OSType pixelFormatType              = CVPixelBufferGetPixelFormatType(imageBuffer);
+//
+//    NSAssert(pixelFormatType == kCVPixelFormatType_32ARGB, @"Code works only with 32ARGB format. Test/adapt for other formats!");
+//
+//    const size_t kAlignment_32ARGB      = 32;
+//    const size_t kBytesPerPixel_32ARGB  = 4;
+//
+//    size_t bytesPerRow                  = CVPixelBufferGetBytesPerRow(imageBuffer);
+//    size_t width                        = CVPixelBufferGetWidth(imageBuffer);
+//    size_t height                       = CVPixelBufferGetHeight(imageBuffer);
+//
+//    BOOL rotatePerpendicular            = (rotationConstant == 1) || (rotationConstant == 3); // Use enumeration values here
+//    const size_t outWidth               = rotatePerpendicular ? height : width;
+//    const size_t outHeight              = rotatePerpendicular ? width  : height;
+//
+//    size_t bytesPerRowOut               = kBytesPerPixel_32ARGB * ceil(outWidth * 1.0 / kAlignment_32ARGB) * kAlignment_32ARGB;
+//
+//    const size_t dstSize                = bytesPerRowOut * outHeight * sizeof(unsigned char);
+//
+//    void *srcBuff                       = CVPixelBufferGetBaseAddress(imageBuffer);
+//
+//    unsigned char *dstBuff              = (unsigned char *)malloc(dstSize);
+//
+//    vImage_Buffer inbuff                = {srcBuff, height, width, bytesPerRow};
+//    vImage_Buffer outbuff               = {dstBuff, outHeight, outWidth, bytesPerRowOut};
+//
+//    uint8_t bgColor[4]                  = {0, 0, 0, 0};
+//
+//    vImage_Error err                    = vImageRotate90_ARGB8888(&inbuff, &outbuff, rotationConstant, bgColor, 0);
+//    if (err != kvImageNoError)
+//    {
+//        NSLog(@"%ld", err);
+//    }
+//
+//    CVPixelBufferUnlockBaseAddress(imageBuffer, 0);
+//
+//    CVPixelBufferRef rotatedBuffer      = NULL;
+//    CVPixelBufferCreateWithBytes(NULL,
+//                                 outWidth,
+//                                 outHeight,
+//                                 pixelFormatType,
+//                                 outbuff.data,
+//                                 bytesPerRowOut,
+//                                 freePixelBufferDataAfterRelease,
+//                                 NULL,
+//                                 NULL,
+//                                 &rotatedBuffer);
+//
+//    return rotatedBuffer;
+//}
+
+/* rotationConstant:
+ *  0 -- rotate 0 degrees (simply copy the data from src to dest)
+ *  1 -- rotate 90 degrees counterclockwise
+ *  2 -- rotate 180 degress
+ *  3 -- rotate 270 degrees counterclockwise
+ */
+- (CVPixelBufferRef)rotateBuffer:(CMSampleBufferRef)sampleBuffer withConstant:(uint8_t)rotationConstant {
+    
+    CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+    OSType pixelFormatType = CVPixelBufferGetPixelFormatType(imageBuffer);
+    const size_t planeCount = CVPixelBufferGetPlaneCount(imageBuffer);
+
+    NSAssert(pixelFormatType == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange, @"Code works only with 420f format. Test/adapt for other formats!");
+    NSAssert(planeCount == 2, @"PlaneCount error!");
+
+    vImage_Error err = kvImageNoError;
+    CVPixelBufferLockBaseAddress(imageBuffer, 0);
+    const size_t width = CVPixelBufferGetWidth(imageBuffer);
+    const size_t height = CVPixelBufferGetHeight(imageBuffer);
+    
+    const BOOL rotatePerpendicular = (rotationConstant == 1) || (rotationConstant == 3); // Use enumeration values here
+    const size_t outWidth          = rotatePerpendicular ? height : width;
+    const size_t outHeight         = rotatePerpendicular ? width  : height;
+
+    // create buffer
+    CVPixelBufferRef rotatedBuffer = NULL;
+    CVPixelBufferCreate(kCFAllocatorDefault, outWidth, outHeight, kCVPixelFormatType_420YpCbCr8BiPlanarFullRange, NULL, &rotatedBuffer);
+    CVPixelBufferLockBaseAddress(rotatedBuffer, 0);
+
+    // rotate Y plane
+    vImage_Buffer originalYBuffer = { CVPixelBufferGetBaseAddressOfPlane(imageBuffer, 0), CVPixelBufferGetHeightOfPlane(imageBuffer, 0),
+        CVPixelBufferGetWidthOfPlane(imageBuffer, 0), CVPixelBufferGetBytesPerRowOfPlane(imageBuffer, 0) };
+    vImage_Buffer rotatedYBuffer = { CVPixelBufferGetBaseAddressOfPlane(rotatedBuffer, 0), CVPixelBufferGetHeightOfPlane(rotatedBuffer, 0),
+        CVPixelBufferGetWidthOfPlane(rotatedBuffer, 0), CVPixelBufferGetBytesPerRowOfPlane(rotatedBuffer, 0) };
+    err = vImageRotate90_Planar8(&originalYBuffer, &rotatedYBuffer, rotationConstant, 0.0, kvImageNoFlags);
+
+    // rotate UV plane
+    vImage_Buffer originalUVBuffer = { CVPixelBufferGetBaseAddressOfPlane(imageBuffer, 1), CVPixelBufferGetHeightOfPlane(imageBuffer, 1),
+        CVPixelBufferGetWidthOfPlane(imageBuffer, 1), CVPixelBufferGetBytesPerRowOfPlane(imageBuffer, 1) };
+    vImage_Buffer rotatedUVBuffer = { CVPixelBufferGetBaseAddressOfPlane(rotatedBuffer, 1), CVPixelBufferGetHeightOfPlane(rotatedBuffer, 1),
+    CVPixelBufferGetWidthOfPlane(rotatedBuffer, 1), CVPixelBufferGetBytesPerRowOfPlane(rotatedBuffer, 1) };
+    err = vImageRotate90_Planar16U(&originalUVBuffer, &rotatedUVBuffer, rotationConstant, 0.0, kvImageNoFlags);
+
+    CVPixelBufferUnlockBaseAddress(imageBuffer, 0);
+    CVPixelBufferUnlockBaseAddress(rotatedBuffer, 0);
+
+    return rotatedBuffer;
+}
+
+- (CVPixelBufferRef)correctBufferOrientation:(CMSampleBufferRef)sampleBuffer videoOrientation:(uint32_t)videoOrientation
+{
+    CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+    CVPixelBufferLockBaseAddress(imageBuffer, 0);
+
+    size_t bytesPerRow                  = CVPixelBufferGetBytesPerRow(imageBuffer);
+    size_t width                        = CVPixelBufferGetWidth(imageBuffer);
+    size_t height                       = CVPixelBufferGetHeight(imageBuffer);
+
+    void *srcBuff                       = CVPixelBufferGetBaseAddress(imageBuffer);
+    
+    size_t dstWidth                     = width;
+    size_t dstHeight                    = height;
+
+    /* rotationConstant:
+     *  0 -- rotate 0 degrees (simply copy the data from src to dest)
+     *  1 -- rotate 90 degrees counterclockwise
+     *  2 -- rotate 180 degress
+     *  3 -- rotate 270 degrees counterclockwise
+     */
+    uint8_t rotationConstant = 0;
+    CGImagePropertyOrientation cgOrientation = videoOrientation;
+    NSLog(@"cgOrientation: %@", @(cgOrientation));
+
+    switch (cgOrientation) {
+        case kCGImagePropertyOrientationUp:
+            rotationConstant = 0;
+            break;
+        case kCGImagePropertyOrientationLeft:
+            rotationConstant = 1;
+            dstWidth = height;
+            dstHeight = width;
+            break;
+        case kCGImagePropertyOrientationDown:
+            rotationConstant = 2;
+            break;
+        case kCGImagePropertyOrientationRight:
+            rotationConstant = 3;
+            dstWidth = height;
+            dstHeight = width;
+            break;
+        default:
+            break;
+    }
+    
+    size_t destBytesPerRow = dstWidth * 4;
+    size_t dstSize         = destBytesPerRow * dstHeight;
+    uint8_t *dstBuff       = (uint8_t *)malloc(dstSize);
+    size_t bytesPerRowOut  = 4 * dstHeight;
+    
+    vImage_Buffer inbuff   = {srcBuff, height, width, bytesPerRow};
+    vImage_Buffer outbuff  = {dstBuff, dstHeight, dstWidth, bytesPerRowOut};
+    uint8_t bgColor[4]     = {0, 0, 0, 0};
+
+    vImage_Error err = vImageRotate90_ARGB8888(&inbuff, &outbuff, rotationConstant, bgColor, 0);
+    if (err != kvImageNoError) NSLog(@"%ld", err);
+
+    CVPixelBufferUnlockBaseAddress(imageBuffer, 0);
+
+    CVPixelBufferRef rotatedBuffer = NULL;
+    CVPixelBufferCreateWithBytes(NULL,
+                                 height,
+                                 width,
+                                 kCVPixelFormatType_32BGRA,
+                                 outbuff.data,
+                                 bytesPerRowOut,
+                                 freePixelBufferDataAfterRelease,
+                                 NULL,
+                                 NULL,
+                                 &rotatedBuffer);
+
+    return rotatedBuffer;
+}
+
+- (void)pushVideoBuffer:(CMSampleBufferRef)sampleBuffer videoOrientation:(uint32_t)videoOrientation {
+    
+    CGImagePropertyOrientation cgOrientation = videoOrientation;
+    uint8_t rotationConstant = 0;
+//    NSLog(@"cgOrientation: %@", @(cgOrientation));
+
+    switch (cgOrientation) {
+        case kCGImagePropertyOrientationUp:
+            self.landscape = NO;
+            rotationConstant = 0;
+            break;
+        case kCGImagePropertyOrientationLeft:
+            rotationConstant = 1;
+            self.landscape = YES;
+            break;
+        case kCGImagePropertyOrientationDown:
+            self.landscape = NO;
+            rotationConstant = 2;
+            break;
+        case kCGImagePropertyOrientationRight:
+            rotationConstant = 3;
+            self.landscape = YES;
+            break;
+        default:
+            break;
+    }
+    
+    CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+    BOOL needRelease = NO;
+    if (rotationConstant > 0) {
+        pixelBuffer = [self rotateBuffer:sampleBuffer withConstant:rotationConstant];
+        needRelease = YES;
+    }
+    
+    size_t width = CVPixelBufferGetWidth(pixelBuffer);
+    size_t height = CVPixelBufferGetHeight(pixelBuffer);
+    
+//    CIImage *ciimage = [CIImage imageWithCVPixelBuffer:pixelBuffer];
+//    CIImage *wImage = [ciimage imageByApplyingCGOrientation:kCGImagePropertyOrientationUp];
+//    CVPixelBufferLockBaseAddress(pixelBuffer, 0);
+//    NSLog(@"sample width :%@ height :%@", @(width), @(height));
+//
+//    CVPixelBufferRef newPixcelBuffer = nil;
+//    CVPixelBufferCreate(kCFAllocatorDefault, width, height, kCVPixelFormatType_32BGRA, nil, &newPixcelBuffer);
+//
+//    if(!_cicontext) {
+//        _cicontext = [CIContext context];
+//    }
+//    [_cicontext render:wImage toCVPixelBuffer:newPixcelBuffer];
+//    CVPixelBufferRelease(newPixcelBuffer);
+//
+    _videoConfiguration.videoSize = CGSizeMake(width, height);
+    NSLog(@"Session: _videoConfiguration.videoSize :%@", NSStringFromCGSize(_videoConfiguration.videoSize));
+
+    if (self.lastOrientation != cgOrientation) {
+        self.lastOrientation = cgOrientation;
+    }
+
+    if(self.captureType & LFLiveInputMaskVideo) {
+        if (self.uploading) [self.videoEncoder encodeVideoData:pixelBuffer timeStamp:NOW videoOrientation:videoOrientation];
+    }
+    
+    if (needRelease) {
+        CVPixelBufferRelease(pixelBuffer);
+    }
+    // roate ciimage
+//    CIImage *wImage = [ciimage imageByApplyingCGOrientation:cgOrientation];
+//    CVPixelBufferLockBaseAddress(pixelBuffer, 0);
+//    NSLog(@"sample width :%@ height :%@", @(width), @(height));
+//
+//    CVPixelBufferRef newPixcelBuffer = nil;
+//    CVPixelBufferCreate(kCFAllocatorDefault, width, height, kCVPixelFormatType_32BGRA, nil, &newPixcelBuffer);
+//
+//    if(!_cicontext) {
+//        _cicontext = [CIContext context];
+//    }
+//    [_cicontext render:wImage toCVPixelBuffer:newPixcelBuffer];
+//
+//    //encode newSampleBuffer by ************
+//    if(self.captureType & LFLiveInputMaskVideo) {
+//        if (self.uploading) [self.videoEncoder encodeVideoData:newPixcelBuffer timeStamp:NOW videoOrientation:videoOrientation];
+//    }
+//
+//    // release
+//    CVPixelBufferRelease(newPixcelBuffer);
+}
+
 - (void)pushSendBuffer:(LFFrame*)frame{
     if(self.relativeTimestamps == 0){
         self.relativeTimestamps = frame.timestamp;

@@ -10,6 +10,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+static NSString *const LY_TEST_RTMP_URL = @"rtmp://192.168.45.174/live/123";
+
 @interface LYUtils : NSObject
 
 + (BOOL)isFirstLaunchApp;
