@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2025D8411670D27B9E104488 /* libPods-LFLiveKitDemo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6E239BB095B118CD59389E8D /* libPods-LFLiveKitDemo.a */; };
 		6512696B25AB20B900C53E46 /* Recoder.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 7D0A55C021B8FFE100695148 /* Recoder.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		6512696F25AB20BF00C53E46 /* RecoderSetupUI.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 7D0A55CC21B8FFE100695148 /* RecoderSetupUI.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		655FCB4025A986CF009A5376 /* LKAlert.m in Sources */ = {isa = PBXBuildFile; fileRef = 655FCB3A25A986CF009A5376 /* LKAlert.m */; };
@@ -14,6 +15,22 @@
 		655FCB4225A986CF009A5376 /* YYReachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 655FCB3E25A986CF009A5376 /* YYReachability.m */; };
 		65897D4125ABE87B00177A22 /* LYUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 65897D4025ABE87B00177A22 /* LYUtils.m */; };
 		65897D4925AC655E00177A22 /* LYUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 65897D4025ABE87B00177A22 /* LYUtils.m */; };
+		65A1335E25B8375D00F24110 /* BlendingShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 65A1335625B8375D00F24110 /* BlendingShaders.metal */; };
+		65A1335F25B8375D00F24110 /* BlendingShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 65A1335625B8375D00F24110 /* BlendingShaders.metal */; };
+		65A1336025B8375D00F24110 /* CLAHE.metal in Sources */ = {isa = PBXBuildFile; fileRef = 65A1335725B8375D00F24110 /* CLAHE.metal */; };
+		65A1336125B8375D00F24110 /* CLAHE.metal in Sources */ = {isa = PBXBuildFile; fileRef = 65A1335725B8375D00F24110 /* CLAHE.metal */; };
+		65A1336225B8375D00F24110 /* Halftone.metal in Sources */ = {isa = PBXBuildFile; fileRef = 65A1335825B8375D00F24110 /* Halftone.metal */; };
+		65A1336325B8375D00F24110 /* Halftone.metal in Sources */ = {isa = PBXBuildFile; fileRef = 65A1335825B8375D00F24110 /* Halftone.metal */; };
+		65A1336425B8375D00F24110 /* HighPassSkinSmoothing.metal in Sources */ = {isa = PBXBuildFile; fileRef = 65A1335925B8375D00F24110 /* HighPassSkinSmoothing.metal */; };
+		65A1336525B8375D00F24110 /* HighPassSkinSmoothing.metal in Sources */ = {isa = PBXBuildFile; fileRef = 65A1335925B8375D00F24110 /* HighPassSkinSmoothing.metal */; };
+		65A1336625B8375D00F24110 /* ColorConversionShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 65A1335A25B8375D00F24110 /* ColorConversionShaders.metal */; };
+		65A1336725B8375D00F24110 /* ColorConversionShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 65A1335A25B8375D00F24110 /* ColorConversionShaders.metal */; };
+		65A1336825B8375D00F24110 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 65A1335B25B8375D00F24110 /* Shaders.metal */; };
+		65A1336925B8375D00F24110 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 65A1335B25B8375D00F24110 /* Shaders.metal */; };
+		65A1336A25B8375D00F24110 /* MultilayerCompositeShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 65A1335C25B8375D00F24110 /* MultilayerCompositeShaders.metal */; };
+		65A1336B25B8375D00F24110 /* MultilayerCompositeShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 65A1335C25B8375D00F24110 /* MultilayerCompositeShaders.metal */; };
+		65A1336C25B8375D00F24110 /* LensBlur.metal in Sources */ = {isa = PBXBuildFile; fileRef = 65A1335D25B8375D00F24110 /* LensBlur.metal */; };
+		65A1336D25B8375D00F24110 /* LensBlur.metal in Sources */ = {isa = PBXBuildFile; fileRef = 65A1335D25B8375D00F24110 /* LensBlur.metal */; };
 		7D0A55C221B8FFE100695148 /* ReplayKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D0A55C121B8FFE100695148 /* ReplayKit.framework */; };
 		7D0A55C621B8FFE100695148 /* SampleHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 7D0A55C521B8FFE100695148 /* SampleHandler.m */; };
 		7D0A55CD21B8FFE100695148 /* ReplayKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D0A55C121B8FFE100695148 /* ReplayKit.framework */; };
@@ -27,8 +44,7 @@
 		84D8B4341D75778B00752B56 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 84D8B4321D75778B00752B56 /* Main.storyboard */; };
 		84D8B4361D75778B00752B56 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 84D8B4351D75778B00752B56 /* Assets.xcassets */; };
 		84D8B4391D75778B00752B56 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 84D8B4371D75778B00752B56 /* LaunchScreen.storyboard */; };
-		A60557933ABE8BD8320A6563 /* libPods-Recoder.a in Frameworks */ = {isa = PBXBuildFile; fileRef = FEAB304836FA19395379F02E /* libPods-Recoder.a */; };
-		BC8B37EEE1CEEF9B5614DC91 /* libPods-LFLiveKitDemo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B1CCEEE06FCFAF75D105A51 /* libPods-LFLiveKitDemo.a */; };
+		CF33F465BEEA7A5FBF996458 /* libPods-Recoder.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6EA561B17F0E4A381129D5CF /* libPods-Recoder.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -66,7 +82,6 @@
 /* Begin PBXFileReference section */
 		0E2A237194B7F98983539602 /* Pods-Recoder.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Recoder.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Recoder/Pods-Recoder.debug.xcconfig"; sourceTree = "<group>"; };
 		289A9C4510CD7EA6F4CE9897 /* Pods-LFLiveKitDemo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LFLiveKitDemo.debug.xcconfig"; path = "Pods/Target Support Files/Pods-LFLiveKitDemo/Pods-LFLiveKitDemo.debug.xcconfig"; sourceTree = "<group>"; };
-		5B1CCEEE06FCFAF75D105A51 /* libPods-LFLiveKitDemo.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-LFLiveKitDemo.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6512697E25AB3B6500C53E46 /* req_proto.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = req_proto.h; sourceTree = "<group>"; };
 		655FCB3925A986CF009A5376 /* LKAlert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LKAlert.h; sourceTree = "<group>"; };
 		655FCB3A25A986CF009A5376 /* LKAlert.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LKAlert.m; sourceTree = "<group>"; };
@@ -78,6 +93,18 @@
 		655FCB5A25A98A54009A5376 /* LYMacro.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LYMacro.h; sourceTree = "<group>"; };
 		65897D3F25ABE87B00177A22 /* LYUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LYUtils.h; sourceTree = "<group>"; };
 		65897D4025ABE87B00177A22 /* LYUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LYUtils.m; sourceTree = "<group>"; };
+		65A1316325B82B7800F24110 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		65A1335525B8375D00F24110 /* MTIShaderLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MTIShaderLib.h; sourceTree = "<group>"; };
+		65A1335625B8375D00F24110 /* BlendingShaders.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = BlendingShaders.metal; sourceTree = "<group>"; };
+		65A1335725B8375D00F24110 /* CLAHE.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = CLAHE.metal; sourceTree = "<group>"; };
+		65A1335825B8375D00F24110 /* Halftone.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Halftone.metal; sourceTree = "<group>"; };
+		65A1335925B8375D00F24110 /* HighPassSkinSmoothing.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = HighPassSkinSmoothing.metal; sourceTree = "<group>"; };
+		65A1335A25B8375D00F24110 /* ColorConversionShaders.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ColorConversionShaders.metal; sourceTree = "<group>"; };
+		65A1335B25B8375D00F24110 /* Shaders.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
+		65A1335C25B8375D00F24110 /* MultilayerCompositeShaders.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = MultilayerCompositeShaders.metal; sourceTree = "<group>"; };
+		65A1335D25B8375D00F24110 /* LensBlur.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = LensBlur.metal; sourceTree = "<group>"; };
+		6E239BB095B118CD59389E8D /* libPods-LFLiveKitDemo.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-LFLiveKitDemo.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6EA561B17F0E4A381129D5CF /* libPods-Recoder.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Recoder.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		7D0A55C021B8FFE100695148 /* Recoder.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Recoder.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		7D0A55C121B8FFE100695148 /* ReplayKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ReplayKit.framework; path = System/Library/Frameworks/ReplayKit.framework; sourceTree = SDKROOT; };
 		7D0A55C421B8FFE100695148 /* SampleHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SampleHandler.h; sourceTree = "<group>"; };
@@ -103,7 +130,6 @@
 		84D8B43A1D75778B00752B56 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8805CD774E7D06C8E63B10C9 /* Pods-Recoder.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Recoder.release.xcconfig"; path = "Pods/Target Support Files/Pods-Recoder/Pods-Recoder.release.xcconfig"; sourceTree = "<group>"; };
 		96E1231310083A3881AD2AB6 /* Pods-LFLiveKitDemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LFLiveKitDemo.release.xcconfig"; path = "Pods/Target Support Files/Pods-LFLiveKitDemo/Pods-LFLiveKitDemo.release.xcconfig"; sourceTree = "<group>"; };
-		FEAB304836FA19395379F02E /* libPods-Recoder.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Recoder.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,7 +138,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7D0A55C221B8FFE100695148 /* ReplayKit.framework in Frameworks */,
-				A60557933ABE8BD8320A6563 /* libPods-Recoder.a in Frameworks */,
+				CF33F465BEEA7A5FBF996458 /* libPods-Recoder.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -130,7 +156,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7D7F5D69219BF41F0040FBE4 /* libc++.tbd in Frameworks */,
-				BC8B37EEE1CEEF9B5614DC91 /* libPods-LFLiveKitDemo.a in Frameworks */,
+				2025D8411670D27B9E104488 /* libPods-LFLiveKitDemo.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -170,14 +196,32 @@
 			path = Reachability;
 			sourceTree = "<group>";
 		};
+		65A1335425B8375D00F24110 /* Shaders */ = {
+			isa = PBXGroup;
+			children = (
+				65A1335525B8375D00F24110 /* MTIShaderLib.h */,
+				65A1335625B8375D00F24110 /* BlendingShaders.metal */,
+				65A1335725B8375D00F24110 /* CLAHE.metal */,
+				65A1335825B8375D00F24110 /* Halftone.metal */,
+				65A1335925B8375D00F24110 /* HighPassSkinSmoothing.metal */,
+				65A1335A25B8375D00F24110 /* ColorConversionShaders.metal */,
+				65A1335B25B8375D00F24110 /* Shaders.metal */,
+				65A1335C25B8375D00F24110 /* MultilayerCompositeShaders.metal */,
+				65A1335D25B8375D00F24110 /* LensBlur.metal */,
+			);
+			name = Shaders;
+			path = "../../../LFLiveKit-ReplayKit/Vendor/MetalPetal/Shaders";
+			sourceTree = "<group>";
+		};
 		65E0CF98FF954863E543A0E1 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				65A1316325B82B7800F24110 /* Metal.framework */,
 				7D7F5D68219BF41F0040FBE4 /* libc++.tbd */,
-				5B1CCEEE06FCFAF75D105A51 /* libPods-LFLiveKitDemo.a */,
 				7D0A55C121B8FFE100695148 /* ReplayKit.framework */,
 				7D0A55CE21B8FFE100695148 /* UIKit.framework */,
-				FEAB304836FA19395379F02E /* libPods-Recoder.a */,
+				6E239BB095B118CD59389E8D /* libPods-LFLiveKitDemo.a */,
+				6EA561B17F0E4A381129D5CF /* libPods-Recoder.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -229,6 +273,7 @@
 		84D8B4281D75778B00752B56 /* LFLiveKitDemo */ = {
 			isa = PBXGroup;
 			children = (
+				65A1335425B8375D00F24110 /* Shaders */,
 				655FCB4C25A9879F009A5376 /* LFLiveKitDemo.entitlements */,
 				655FCB3725A986CF009A5376 /* UPDClass */,
 				84D8B42C1D75778B00752B56 /* AppDelegate.h */,
@@ -463,9 +508,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				65A1336B25B8375D00F24110 /* MultilayerCompositeShaders.metal in Sources */,
+				65A1336125B8375D00F24110 /* CLAHE.metal in Sources */,
 				65897D4925AC655E00177A22 /* LYUtils.m in Sources */,
+				65A1336325B8375D00F24110 /* Halftone.metal in Sources */,
 				7D0A55E421B9006000695148 /* ZFUploadTool.m in Sources */,
+				65A1336725B8375D00F24110 /* ColorConversionShaders.metal in Sources */,
+				65A1336D25B8375D00F24110 /* LensBlur.metal in Sources */,
+				65A1336525B8375D00F24110 /* HighPassSkinSmoothing.metal in Sources */,
+				65A1336925B8375D00F24110 /* Shaders.metal in Sources */,
 				7D0A55C621B8FFE100695148 /* SampleHandler.m in Sources */,
+				65A1335F25B8375D00F24110 /* BlendingShaders.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -481,13 +534,21 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				65A1336625B8375D00F24110 /* ColorConversionShaders.metal in Sources */,
+				65A1336225B8375D00F24110 /* Halftone.metal in Sources */,
+				65A1336825B8375D00F24110 /* Shaders.metal in Sources */,
 				655FCB4225A986CF009A5376 /* YYReachability.m in Sources */,
+				65A1336A25B8375D00F24110 /* MultilayerCompositeShaders.metal in Sources */,
 				655FCB4125A986CF009A5376 /* LYUDPSession.m in Sources */,
 				84D8B4311D75778B00752B56 /* ViewController.m in Sources */,
+				65A1335E25B8375D00F24110 /* BlendingShaders.metal in Sources */,
+				65A1336425B8375D00F24110 /* HighPassSkinSmoothing.metal in Sources */,
 				84D8B42E1D75778B00752B56 /* AppDelegate.m in Sources */,
+				65A1336C25B8375D00F24110 /* LensBlur.metal in Sources */,
 				84D8B42B1D75778B00752B56 /* main.m in Sources */,
 				655FCB4025A986CF009A5376 /* LKAlert.m in Sources */,
 				65897D4125ABE87B00177A22 /* LYUtils.m in Sources */,
+				65A1336025B8375D00F24110 /* CLAHE.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

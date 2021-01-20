@@ -12,6 +12,11 @@
 #import "LFStreamRTMPSocket.h"
 #import "LFLiveStreamInfo.h"
 #import <Accelerate/Accelerate.h>
+#import "MTIImage+Filters.h"
+#import "MTIContext+Rendering.h"
+#import "MTIImage+Filters.h"
+#import "MTITransformFilter.h"
+#import "MTICVPixelBufferPool.h"
 
 @interface LFLiveSession ()<LFAudioEncodingDelegate, LFVideoEncodingDelegate, LFStreamSocketDelegate>
 
@@ -62,6 +67,8 @@
 
 @property (nonatomic, assign) BOOL landscape;
 
+@property (nonatomic, strong) MTIContext * mtiContext;
+@property (nonatomic, strong) MTICVPixelBufferPool *pixelBufferPool;
 @end
 
 @implementation LFLiveSession
@@ -253,6 +260,33 @@ void freePixelBufferDataAfterRelease(void *releaseRefCon, const void *baseAddres
     return rotatedBuffer;
 }
 
+- (CVPixelBufferRef)createPixelBuffer:(CMSampleBufferRef)sampleBuffer withConstant:(uint8_t)rotationConstant {
+    
+    CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+    OSType pixelFormatType = CVPixelBufferGetPixelFormatType(imageBuffer);
+
+    vImage_Error err = kvImageNoError;
+    CVPixelBufferLockBaseAddress(imageBuffer, 0);
+    const size_t width = CVPixelBufferGetWidth(imageBuffer);
+    const size_t height = CVPixelBufferGetHeight(imageBuffer);
+    
+    const BOOL rotatePerpendicular = (rotationConstant == kRotate90DegreesClockwise) || (rotationConstant == kRotate270DegreesClockwise); // Use enumeration values here
+    const size_t outWidth          = rotatePerpendicular ? height : width;
+    const size_t outHeight         = rotatePerpendicular ? width  : height;
+    NSError *error = nil;
+
+    if (!_pixelBufferPool) {
+        _pixelBufferPool = [[MTICVPixelBufferPool alloc] initWithPixelBufferWidth:outWidth pixelBufferHeight:outHeight pixelFormatType:pixelFormatType minimumBufferCount:1 error:&error];
+    }
+
+    CVPixelBufferRef rotatedBuffer = [_pixelBufferPool newPixelBufferWithAllocationThreshold:2 error:&error];
+    if (rotatedBuffer == NULL) {
+        NSLog(@"MTICVPixelBufferPool newPixelBufferWithAllocationThreshold error: %@", error);
+    }
+    
+    return rotatedBuffer;
+}
+
 - (CVPixelBufferRef)correctBufferOrientation:(CMSampleBufferRef)sampleBuffer videoOrientation:(uint32_t)videoOrientation
 {
     CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
@@ -357,8 +391,39 @@ void freePixelBufferDataAfterRelease(void *releaseRefCon, const void *baseAddres
     CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
     BOOL needRelease = NO;
     if (rotationConstant > 0) {
-        pixelBuffer = [self rotateBuffer:sampleBuffer withConstant:rotationConstant];
-        needRelease = YES;
+        if (!_mtiContext) {
+            NSError *error = nil;
+            _mtiContext = [[MTIContext alloc] initWithDevice:MTLCreateSystemDefaultDevice() error:&error];
+            if (!_mtiContext) {
+                NSLog(@"Create MTIContext error %@", error);
+            }
+        }
+        
+        MTIImage *mtiImage = [[MTIImage alloc] initWithCVPixelBuffer:pixelBuffer alphaType:MTIAlphaTypeAlphaIsOne];
+        [mtiImage imageByApplyingCGOrientation:cgOrientation];
+//        CGAffineTransform transform = CGAffineTransformRotate(CGAffineTransformIdentity, M_PI_2);
+//
+//        MTITransformFilter *transformFilter = [[MTITransformFilter alloc] init];
+//        transformFilter.inputImage = mtiImage;
+//        transformFilter.transform = CATransform3DMakeAffineTransform(transform);
+//        transformFilter.viewport = transformFilter.minimumEnclosingViewport;
+        
+        if (mtiImage) {
+            
+            CVPixelBufferRef newPixelBufferRef = [self createPixelBuffer:sampleBuffer withConstant:rotationConstant];
+            NSError *error = nil;
+            if (newPixelBufferRef != NULL && [_mtiContext renderImage:mtiImage toCVPixelBuffer:newPixelBufferRef error:&error]) {
+                pixelBuffer = newPixelBufferRef;//[self rotateBuffer:sampleBuffer withConstant:rotationConstant];
+                needRelease = YES;
+            }else {
+                needRelease = NO;
+                if (newPixelBufferRef != NULL) {
+                    CVPixelBufferRelease(pixelBuffer);
+                }
+                pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+                NSLog(@"MTIContext renderImage error %@", error);
+            }
+        }
     }
     
     size_t width = CVPixelBufferGetWidth(pixelBuffer);

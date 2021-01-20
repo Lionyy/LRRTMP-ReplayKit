@@ -5,6 +5,7 @@ target 'LFLiveKitDemo' do
     inhibit_all_warnings!
     
     pod 'LFLiveKit-ReplayKit', :path => '../../.'
+    
     pod 'MBProgressHUD'
     pod 'MJExtension'
     pod 'CocoaAsyncSocket'
@@ -15,7 +16,9 @@ target 'Recoder' do
     platform :ios, '12.0'
     inhibit_all_warnings!
     
+    # pod 'MetalPetal', :path => '../../Vendor/.'
     pod 'LFLiveKit-ReplayKit', :path => '../../.'
+
     pod 'MJExtension'
     pod 'CocoaAsyncSocket'
     
