@@ -206,9 +206,9 @@ void freePixelBufferDataAfterRelease(void *releaseRefCon, const void *baseAddres
 
 /* rotationConstant:
  *  0 -- rotate 0 degrees (simply copy the data from src to dest)
- *  1 -- rotate 90 degrees counterclockwise
- *  2 -- rotate 180 degress
- *  3 -- rotate 270 degrees counterclockwise
+ *  3 -- rotate 90 degrees clockwise
+ *  2 -- rotate 180 degress clockwise
+ *  1 -- rotate 270 degrees clockwise
  */
 - (CVPixelBufferRef)rotateBuffer:(CMSampleBufferRef)sampleBuffer withConstant:(uint8_t)rotationConstant {
     
@@ -224,7 +224,7 @@ void freePixelBufferDataAfterRelease(void *releaseRefCon, const void *baseAddres
     const size_t width = CVPixelBufferGetWidth(imageBuffer);
     const size_t height = CVPixelBufferGetHeight(imageBuffer);
     
-    const BOOL rotatePerpendicular = (rotationConstant == 1) || (rotationConstant == 3); // Use enumeration values here
+    const BOOL rotatePerpendicular = (rotationConstant == kRotate90DegreesClockwise) || (rotationConstant == kRotate270DegreesClockwise); // Use enumeration values here
     const size_t outWidth          = rotatePerpendicular ? height : width;
     const size_t outHeight         = rotatePerpendicular ? width  : height;
 
@@ -269,28 +269,28 @@ void freePixelBufferDataAfterRelease(void *releaseRefCon, const void *baseAddres
 
     /* rotationConstant:
      *  0 -- rotate 0 degrees (simply copy the data from src to dest)
-     *  1 -- rotate 90 degrees counterclockwise
-     *  2 -- rotate 180 degress
-     *  3 -- rotate 270 degrees counterclockwise
+     *  3 -- rotate 90 degrees clockwise
+     *  2 -- rotate 180 degress clockwise
+     *  1 -- rotate 270 degrees clockwise
      */
-    uint8_t rotationConstant = 0;
+    uint8_t rotationConstant = kRotate0DegreesClockwise;
     CGImagePropertyOrientation cgOrientation = videoOrientation;
     NSLog(@"cgOrientation: %@", @(cgOrientation));
 
     switch (cgOrientation) {
         case kCGImagePropertyOrientationUp:
-            rotationConstant = 0;
+            rotationConstant = kRotate0DegreesClockwise;
             break;
         case kCGImagePropertyOrientationLeft:
-            rotationConstant = 1;
+            rotationConstant = kRotate90DegreesClockwise;
             dstWidth = height;
             dstHeight = width;
             break;
         case kCGImagePropertyOrientationDown:
-            rotationConstant = 2;
+            rotationConstant = kRotate180DegreesClockwise;
             break;
         case kCGImagePropertyOrientationRight:
-            rotationConstant = 3;
+            rotationConstant = kRotate270DegreesClockwise;
             dstWidth = height;
             dstHeight = width;
             break;
