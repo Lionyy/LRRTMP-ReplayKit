@@ -110,17 +110,20 @@ void freePixelBufferDataAfterRelease(void *releaseRefCon, const void *baseAddres
     if (rotationConstant > 0) {
         
         MTIImage *mtiImage = [[MTIImage alloc] initWithCVPixelBuffer:pixelBuffer alphaType:MTIAlphaTypeAlphaIsOne];
-        [mtiImage imageByApplyingCGOrientation:kCGImagePropertyOrientationUp];
-//        CGAffineTransform transform = CGAffineTransformRotate(CGAffineTransformIdentity, angle);
-//        MTITransformFilter *transformFilter = [[MTITransformFilter alloc] init];
-//        transformFilter.inputImage = mtiImage;
-//        transformFilter.transform = CATransform3DMakeAffineTransform(transform);
-//        transformFilter.viewport = transformFilter.minimumEnclosingViewport;
+//        [mtiImage imageByApplyingCGOrientation:kCGImagePropertyOrientationUp];
+        CGAffineTransform transform = CGAffineTransformRotate(CGAffineTransformIdentity, angle);
+        MTITransformFilter *transformFilter = [[MTITransformFilter alloc] init];
+        transformFilter.inputImage = mtiImage;
+        transformFilter.transform = CATransform3DMakeAffineTransform(transform);
+        transformFilter.viewport = transformFilter.minimumEnclosingViewport;
         
-        if (mtiImage) {
+        MTIImage *retmtiImage = transformFilter.outputImage;
+        
+        if (retmtiImage) {
             fixedPixelBufferRef = [self createPixelBuffer:pixelBuffer withConstant:rotationConstant];
             NSError *error = nil;
-            if (fixedPixelBufferRef != NULL && [_mtiContext renderImage:mtiImage toCVPixelBuffer:fixedPixelBufferRef error:&error]) {
+            if (fixedPixelBufferRef != NULL && [self.mtiContext renderImage:retmtiImage toCVPixelBuffer:fixedPixelBufferRef error:&error]) {
+                
             }else {
                 if (fixedPixelBufferRef != NULL) {
                     CVPixelBufferRelease(fixedPixelBufferRef);

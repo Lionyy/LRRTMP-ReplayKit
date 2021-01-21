@@ -125,11 +125,11 @@
     }
      
     CGSize videoSize = _configuration.videoSize;
-    if (*compressionSession == landCompressionSession) {
-        videoSize = CGSizeMake(MAX(videoSize.width, videoSize.height), MIN(videoSize.width, videoSize.height));
-    }else {
-        videoSize = CGSizeMake(MIN(videoSize.width, videoSize.height), MAX(videoSize.width, videoSize.height));
-    }
+//    if (*compressionSession == landCompressionSession) {
+//        videoSize = CGSizeMake(MAX(videoSize.width, videoSize.height), MIN(videoSize.width, videoSize.height));
+//    }else {
+//        videoSize = CGSizeMake(MIN(videoSize.width, videoSize.height), MAX(videoSize.width, videoSize.height));
+//    }
     
     OSStatus status = VTCompressionSessionCreate(NULL, videoSize.width, videoSize.height, codecType, NULL, NULL, NULL, VideoCompressonOutputCallback, (__bridge void *)self, compressionSession);
     if (status != noErr) {
