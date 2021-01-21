@@ -66,7 +66,7 @@
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(willEnterForeground:) name:UIApplicationDidBecomeActiveNotification object:nil];
 #ifdef DEBUG
         enabledWriteVideoFile = NO;
-        [self initForFilePath];
+//        [self initForFilePath];
 #endif
         
     }
@@ -125,14 +125,15 @@
     }
      
     CGSize videoSize = _configuration.videoSize;
-//    if (*compressionSession == landCompressionSession) {
-//        videoSize = CGSizeMake(MAX(videoSize.width, videoSize.height), MIN(videoSize.width, videoSize.height));
-//    }else {
-//        videoSize = CGSizeMake(MIN(videoSize.width, videoSize.height), MAX(videoSize.width, videoSize.height));
-//    }
+    if (compressionSession == &landCompressionSession) {
+        videoSize = CGSizeMake(MAX(videoSize.width, videoSize.height), MIN(videoSize.width, videoSize.height));
+    }else {
+        videoSize = CGSizeMake(MIN(videoSize.width, videoSize.height), MAX(videoSize.width, videoSize.height));
+    }
     
     OSStatus status = VTCompressionSessionCreate(NULL, videoSize.width, videoSize.height, codecType, NULL, NULL, NULL, VideoCompressonOutputCallback, (__bridge void *)self, compressionSession);
     if (status != noErr) {
+        inResetting = NO;
         return;
     }
 
@@ -214,10 +215,13 @@
 
 #pragma mark - LFVideoEncoder
 
-- (void)encodeVideoData:(nullable CVPixelBufferRef)pixelBuffer timeStamp:(uint64_t)timeStamp videoOrientation:(CGImagePropertyOrientation)videoOrientation {
+- (void)encodeVideoData:(nullable CVPixelBufferRef)pixelBuffer
+              timeStamp:(uint64_t)timeStamp
+       videoOrientation:(CGImagePropertyOrientation)videoOrientation {
+    
     if(_isBackGround) return;
     frameCount++;
-    if (!portraitCompressionSession) {
+    if (!portraitCompressionSession && !landCompressionSession) {
         return;
     }
     CMTime presentationTimeStamp = CMTimeMake(frameCount, (int32_t)_configuration.videoFrameRate);
@@ -233,37 +237,32 @@
     videoExtInfo.videoOrientation = videoOrientation;
     videoExtInfo.frameNumber = frameCount;
 
-    uint8_t rotationConstant = kRotate0DegreesClockwise;
-    switch (videoOrientation) {
-        case kCGImagePropertyOrientationUp:
-            rotationConstant = kRotate0DegreesClockwise;
-            break;
-        case kCGImagePropertyOrientationLeft:
-            rotationConstant = kRotate90DegreesClockwise;
-            break;
-        case kCGImagePropertyOrientationDown:
-            rotationConstant = kRotate180DegreesClockwise;
-            break;
-        case kCGImagePropertyOrientationRight:
-            rotationConstant = kRotate270DegreesClockwise;
-            break;
-        default:
-            break;
+    CGImagePropertyOrientation testVideoOrientation = kCGImagePropertyOrientationUp;
+    if(frameCount % 100 == 0) {
+        testVideoOrientation = kCGImagePropertyOrientationLeft;
     }
     
-    CVPixelBufferRef rotatePixelBuffer = [_pixcelBufferHandler rotatePixelBuffer:pixelBuffer videoOrientation:videoOrientation];
+    CVPixelBufferRef rotatePixelBuffer = [_pixcelBufferHandler rotatePixelBuffer:pixelBuffer
+                                                                videoOrientation:testVideoOrientation
+                                                                        useMetal:NO];
+    
     const size_t width = CVPixelBufferGetWidth(rotatePixelBuffer);
     const size_t height = CVPixelBufferGetHeight(rotatePixelBuffer);
     
-    if (_configuration.videoSize.width != width || _configuration.videoSize.height != height) {
-        _configuration.videoSize = CGSizeMake(width, height);
-        [self resetCompressionSession:&portraitCompressionSession];
-    }
+    _configuration.videoSize = CGSizeMake(width, height);
     
-    OSStatus status = VTCompressionSessionEncodeFrame(portraitCompressionSession, pixelBuffer, presentationTimeStamp, duration, (__bridge CFDictionaryRef)properties, (__bridge_retained void *)videoExtInfo, &flags);
-    if(status != noErr){
-        NSLog(@"status != noErr, %d", status);
-        [self resetCompressionSession:&portraitCompressionSession];
+    if (width > height) {
+        OSStatus status = VTCompressionSessionEncodeFrame(landCompressionSession, pixelBuffer, presentationTimeStamp, duration, (__bridge CFDictionaryRef)properties, (__bridge_retained void *)videoExtInfo, &flags);
+        if(status != noErr){
+            NSLog(@"status != noErr, %d", status);
+            [self resetCompressionSession:&landCompressionSession];
+        }
+    } else {
+        OSStatus status = VTCompressionSessionEncodeFrame(portraitCompressionSession, pixelBuffer, presentationTimeStamp, duration, (__bridge CFDictionaryRef)properties, (__bridge_retained void *)videoExtInfo, &flags);
+        if(status != noErr){
+            NSLog(@"status != noErr, %d", status);
+            [self resetCompressionSession:&portraitCompressionSession];
+        }
     }
     
     if (rotatePixelBuffer != pixelBuffer) {
@@ -349,7 +348,7 @@ static void VideoCompressonOutputCallback(void *VTref, void *VTFrameRef, OSStatu
         return;
     }
 
-    [videoEncoder getRotateByImageOrientation:videoExtInfo.videoOrientation];
+//    [videoEncoder getRotateByImageOrientation:videoExtInfo.videoOrientation];
     
     if (keyframe && !videoEncoder->sps) {
         CMFormatDescriptionRef format = CMSampleBufferGetFormatDescription(sampleBuffer);

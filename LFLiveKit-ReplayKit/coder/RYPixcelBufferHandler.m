@@ -27,13 +27,13 @@ void freePixelBufferDataAfterRelease(void *releaseRefCon, const void *baseAddres
     free((void *)baseAddress);
 }
 
-/* rotationConstant:
- *  0 -- rotate 0 degrees (simply copy the data from src to dest)
- *  3 -- rotate 90 degrees clockwise
- *  2 -- rotate 180 degress clockwise
- *  1 -- rotate 270 degrees clockwise
- */
-- (CVPixelBufferRef)rotatePixelBuffer:(CVPixelBufferRef)imageBuffer withConstant:(uint8_t)rotationConstant {
+/// Accelerate Framework vImageRotate90_Planar8 vImageRotate90_Planar16U rotate pixelBuffer use CPU
+/// @param imageBuffer original pixelBuffer
+/// @param videoOrientation 0 -- rotate 0 degrees (simply copy the data from src to dest)
+///                         3 -- rotate 90 degrees clockwise
+///                         2 -- rotate 180 degress clockwise
+///                         1 -- rotate 270 degrees clockwise
+- (CVPixelBufferRef)rotateVImagePixelBuffer:(CVPixelBufferRef)imageBuffer videoOrientation:(CGImagePropertyOrientation)videoOrientation {
     
     OSType pixelFormatType = CVPixelBufferGetPixelFormatType(imageBuffer);
     const size_t planeCount = CVPixelBufferGetPlaneCount(imageBuffer);
@@ -46,12 +46,32 @@ void freePixelBufferDataAfterRelease(void *releaseRefCon, const void *baseAddres
         return imageBuffer;
     }
 
+    uint8_t rotationConstant = kRotate0DegreesClockwise;
+    switch (videoOrientation) {
+        case kCGImagePropertyOrientationUp:
+            rotationConstant = kRotate0DegreesClockwise;
+            break;
+        case kCGImagePropertyOrientationLeft:
+            rotationConstant = kRotate90DegreesClockwise;
+            break;
+        case kCGImagePropertyOrientationDown:
+            rotationConstant = kRotate180DegreesClockwise;
+            break;
+        case kCGImagePropertyOrientationRight:
+            rotationConstant = kRotate270DegreesClockwise;
+            break;
+        default:
+            break;
+    }
+        
     vImage_Error err = kvImageNoError;
     CVPixelBufferLockBaseAddress(imageBuffer, 0);
     const size_t width = CVPixelBufferGetWidth(imageBuffer);
     const size_t height = CVPixelBufferGetHeight(imageBuffer);
     
-    const BOOL rotatePerpendicular = (rotationConstant == kRotate90DegreesClockwise) || (rotationConstant == kRotate270DegreesClockwise); // Use enumeration values here
+    const BOOL rotatePerpendicular = (rotationConstant == kRotate90DegreesClockwise ||
+                                      rotationConstant == kRotate270DegreesClockwise); // Use enumeration values here
+    
     const size_t outWidth = rotatePerpendicular ? height : width;
     const size_t outHeight= rotatePerpendicular ? width  : height;
 
@@ -80,27 +100,27 @@ void freePixelBufferDataAfterRelease(void *releaseRefCon, const void *baseAddres
     return rotatedBuffer;
 }
 
-- (CVPixelBufferRef)rotatePixelBuffer:(CVPixelBufferRef)pixelBuffer videoOrientation:(CGImagePropertyOrientation)videoOrientation {
+- (CVPixelBufferRef)rotateMetalPixelBuffer:(CVPixelBufferRef)pixelBuffer videoOrientation:(CGImagePropertyOrientation)videoOrientation {
     
     CVPixelBufferRef fixedPixelBufferRef = pixelBuffer;
-    uint8_t rotationConstant = 0;
+    uint8_t rotationConstant = kRotate0DegreesClockwise;
     CGFloat angle = 0;
     
     switch (videoOrientation) {
         case kCGImagePropertyOrientationUp:
-            rotationConstant = 0;
+            rotationConstant = kRotate0DegreesClockwise;
             angle = 0;
             break;
         case kCGImagePropertyOrientationLeft:
-            rotationConstant = 1;
+            rotationConstant = kRotate90DegreesClockwise;
             angle = M_PI_2;
             break;
         case kCGImagePropertyOrientationDown:
-            rotationConstant = 2;
+            rotationConstant = kRotate180DegreesClockwise;
             angle = M_PI;
             break;
         case kCGImagePropertyOrientationRight:
-            rotationConstant = 3;
+            rotationConstant = kRotate270DegreesClockwise;
             angle = M_PI + M_PI_2;
             break;
         default:
@@ -110,30 +130,37 @@ void freePixelBufferDataAfterRelease(void *releaseRefCon, const void *baseAddres
     if (rotationConstant > 0) {
         
         MTIImage *mtiImage = [[MTIImage alloc] initWithCVPixelBuffer:pixelBuffer alphaType:MTIAlphaTypeAlphaIsOne];
-//        [mtiImage imageByApplyingCGOrientation:kCGImagePropertyOrientationUp];
-        CGAffineTransform transform = CGAffineTransformRotate(CGAffineTransformIdentity, angle);
+        
+        CGAffineTransform transform = CGAffineTransformMakeRotation(angle);
         MTITransformFilter *transformFilter = [[MTITransformFilter alloc] init];
         transformFilter.inputImage = mtiImage;
         transformFilter.transform = CATransform3DMakeAffineTransform(transform);
         transformFilter.viewport = transformFilter.minimumEnclosingViewport;
         
-        MTIImage *retmtiImage = transformFilter.outputImage;
+        MTIImage *outputImage = transformFilter.outputImage;
         
-        if (retmtiImage) {
+        if (outputImage) {
             fixedPixelBufferRef = [self createPixelBuffer:pixelBuffer withConstant:rotationConstant];
             NSError *error = nil;
-            if (fixedPixelBufferRef != NULL && [self.mtiContext renderImage:retmtiImage toCVPixelBuffer:fixedPixelBufferRef error:&error]) {
-                
-            }else {
-                if (fixedPixelBufferRef != NULL) {
+            if (fixedPixelBufferRef != NULL) {
+                if (![self.mtiContext renderImage:outputImage toCVPixelBuffer:fixedPixelBufferRef error:&error]) {
+                    NSLog(@"MTIContext renderImage error %@", error);
                     CVPixelBufferRelease(fixedPixelBufferRef);
                 }
-                NSLog(@"MTIContext renderImage error %@", error);
             }
         }
     }
     
     return fixedPixelBufferRef;
+}
+
+- (CVPixelBufferRef)rotatePixelBuffer:(CVPixelBufferRef)pixelBuffer videoOrientation:(CGImagePropertyOrientation)videoOrientation useMetal:(BOOL)useMetal
+{
+    if (useMetal) {
+        return [self rotateMetalPixelBuffer:pixelBuffer videoOrientation:videoOrientation];
+    }else {
+        return [self rotateVImagePixelBuffer:pixelBuffer videoOrientation:videoOrientation];
+    }
 }
 
 #pragma mark - Private Methods
@@ -146,7 +173,9 @@ void freePixelBufferDataAfterRelease(void *releaseRefCon, const void *baseAddres
     const size_t width = CVPixelBufferGetWidth(imageBuffer);
     const size_t height = CVPixelBufferGetHeight(imageBuffer);
     
-    const BOOL rotatePerpendicular = (rotationConstant == kRotate90DegreesClockwise) || (rotationConstant == kRotate270DegreesClockwise); // Use enumeration values here
+    const BOOL rotatePerpendicular = (rotationConstant == kRotate90DegreesClockwise ||
+                                      rotationConstant == kRotate270DegreesClockwise); // Use enumeration values here
+    
     const size_t outWidth = rotatePerpendicular ? height : width;
     const size_t outHeight = rotatePerpendicular ? width  : height;
     NSError *error = nil;

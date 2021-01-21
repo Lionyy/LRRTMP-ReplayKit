@@ -98,11 +98,21 @@
     [self.view addSubview:statrButton1];
     [self.view addSubview:statrButton2];
     
+    CGFloat width = UIScreen.mainScreen.bounds.size.width;
+    CGFloat height = UIScreen.mainScreen.bounds.size.height;
+    if(width < height) {
+        width = ceilf(width / height * 1920);
+        height = 1920;
+    }else {
+        height = ceilf(height / width * 1920);
+        width = 1920;
+    }
+
     LFLiveAudioConfiguration *audioConfiguration = [LFLiveAudioConfiguration defaultConfigurationForQuality:LFLiveAudioQuality_High];
     audioConfiguration.numberOfChannels = 1;
     LFLiveVideoConfiguration *videoConfiguration = [LFLiveVideoConfiguration defaultConfigurationForQuality:LFLiveVideoQuality_High4
                                                                                      outputImageOrientation:UIInterfaceOrientationLandscapeRight];
-    videoConfiguration.videoSize = CGSizeMake(1920, (NSInteger)(UIScreen.mainScreen.bounds.size.height/UIScreen.mainScreen.bounds.size.width * 1920));
+    videoConfiguration.videoSize = CGSizeMake(width, height);
     videoConfiguration.encoderType = LFVideoH265Encoder;
     
     _udpSession = [[LYUDPSession alloc] initWithAudioConfiguration:audioConfiguration videoConfiguration:videoConfiguration];
@@ -191,46 +201,36 @@
 - (void)statrButtonClick:(UIButton *)sender {
     if ([[RPScreenRecorder sharedRecorder] isRecording]) {
         NSLog(@"Recording, stop record");
-        if (@available(iOS 11.0, *)) {
-            [self.session stopLive];
-            [[RPScreenRecorder sharedRecorder] stopCaptureWithHandler:^(NSError * _Nullable error) {
-                if (error) {
-                    NSLog(@"stopCaptureWithHandler:%@", error.localizedDescription);
-                } else {
-                    NSLog(@"CaptureWithHandlerStoped");
-                }
-            }];
-        } else {
-            // Fallback on earlier versions
-        }
+        [self.session stopLive];
+        [[RPScreenRecorder sharedRecorder] stopCaptureWithHandler:^(NSError * _Nullable error) {
+            if (error) {
+                NSLog(@"stopCaptureWithHandler:%@", error.localizedDescription);
+            } else {
+                NSLog(@"CaptureWithHandlerStoped");
+            }
+        }];
     } else {
-        if (@available(iOS 11.0, *)) {
-            NSLog(@"start Recording");
-            [[RPScreenRecorder sharedRecorder] startCaptureWithHandler:^(CMSampleBufferRef  _Nonnull sampleBuffer, RPSampleBufferType bufferType, NSError * _Nullable error) {
+        [[RPScreenRecorder sharedRecorder] startCaptureWithHandler:^(CMSampleBufferRef  _Nonnull sampleBuffer, RPSampleBufferType bufferType, NSError * _Nullable error) {
 //                NSLog(@"bufferTyped:%ld", (long)bufferType);
-                switch (bufferType) {
-                    case RPSampleBufferTypeVideo:
-                        [self.session pushVideoBuffer:sampleBuffer videoOrientation:[self getSampleOrientationByBuffer:sampleBuffer]];
-                        break;
-                    case RPSampleBufferTypeAudioMic:
-                        [self.session pushAudioBuffer:sampleBuffer];
-                        break;
-                        
-                    default:
-                        break;
-                }
-                if (error) {
-                    NSLog(@"startCaptureWithHandler:error:%@", error.localizedDescription);
-                }
-            } completionHandler:^(NSError * _Nullable error) {
-                if (error) {
-                    NSLog(@"completionHandler:error:%@", error.localizedDescription);
-                }
-            }];
-        } else {
-            // Fallback on earlier versions
-        }
-        
+            switch (bufferType) {
+                case RPSampleBufferTypeVideo:
+                    [self.session pushVideoBuffer:sampleBuffer videoOrientation:[self getSampleOrientationByBuffer:sampleBuffer]];
+                    break;
+                case RPSampleBufferTypeAudioMic:
+                    [self.session pushAudioBuffer:sampleBuffer];
+                    break;
+                    
+                default:
+                    break;
+            }
+            if (error) {
+                NSLog(@"startCaptureWithHandler:error:%@", error.localizedDescription);
+            }
+        } completionHandler:^(NSError * _Nullable error) {
+            if (error) {
+                NSLog(@"completionHandler:error:%@", error.localizedDescription);
+            }
+        }];
     }
 }
 

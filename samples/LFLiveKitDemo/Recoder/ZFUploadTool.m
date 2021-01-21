@@ -57,8 +57,18 @@
         audioConfiguration.numberOfChannels = 1;
         LFLiveVideoConfiguration *videoConfiguration;
        
+        CGFloat width = UIScreen.mainScreen.bounds.size.width;
+        CGFloat height = UIScreen.mainScreen.bounds.size.height;
+        if(width < height) {
+            width = ceilf(width / height * 1920);
+            height = 1920;
+        }else {
+            height = ceilf(height / width * 1920);
+            width = 1920;
+        }
+        
         videoConfiguration = [LFLiveVideoConfiguration defaultConfigurationForQuality:LFLiveVideoQuality_High4];
-        videoConfiguration.videoSize = CGSizeMake((NSInteger)(UIScreen.mainScreen.bounds.size.width/UIScreen.mainScreen.bounds.size.height * 1920), 1920);
+        videoConfiguration.videoSize = CGSizeMake(width, height);
         videoConfiguration.encoderType = LFVideoH265Encoder;
         
         _session = [[LFLiveSession alloc] initWithAudioConfiguration:audioConfiguration videoConfiguration:videoConfiguration captureType:_mic? LFLiveInputMaskAll:LFLiveInputMaskVideo];
