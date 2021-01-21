@@ -60,7 +60,7 @@
             }
         }
         [self resetCompressionSession:&portraitCompressionSession];
-        [self resetCompressionSession:&landCompressionSession];
+//        [self resetCompressionSession:&landCompressionSession];
 
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(willEnterBackground:) name:UIApplicationWillResignActiveNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(willEnterForeground:) name:UIApplicationDidBecomeActiveNotification object:nil];
@@ -76,7 +76,7 @@
 - (void)dealloc {
 
     [self releaseCompressionSession:&portraitCompressionSession];
-    [self releaseCompressionSession:&landCompressionSession];
+//    [self releaseCompressionSession:&landCompressionSession];
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
@@ -125,11 +125,11 @@
     }
      
     CGSize videoSize = _configuration.videoSize;
-    if (compressionSession == &landCompressionSession) {
-        videoSize = CGSizeMake(MAX(videoSize.width, videoSize.height), MIN(videoSize.width, videoSize.height));
-    }else {
-        videoSize = CGSizeMake(MIN(videoSize.width, videoSize.height), MAX(videoSize.width, videoSize.height));
-    }
+//    if (compressionSession == &landCompressionSession) {
+//        videoSize = CGSizeMake(MAX(videoSize.width, videoSize.height), MIN(videoSize.width, videoSize.height));
+//    }else {
+//        videoSize = CGSizeMake(MIN(videoSize.width, videoSize.height), MAX(videoSize.width, videoSize.height));
+//    }
     
     OSStatus status = VTCompressionSessionCreate(NULL, videoSize.width, videoSize.height, codecType, NULL, NULL, NULL, VideoCompressonOutputCallback, (__bridge void *)self, compressionSession);
     if (status != noErr) {
@@ -221,7 +221,7 @@
     
     if(_isBackGround) return;
     frameCount++;
-    if (!portraitCompressionSession && !landCompressionSession) {
+    if (!portraitCompressionSession) {
         return;
     }
     CMTime presentationTimeStamp = CMTimeMake(frameCount, (int32_t)_configuration.videoFrameRate);
@@ -237,33 +237,42 @@
     videoExtInfo.videoOrientation = videoOrientation;
     videoExtInfo.frameNumber = frameCount;
 
-    CGImagePropertyOrientation testVideoOrientation = kCGImagePropertyOrientationUp;
-    if(frameCount % 100 == 0) {
-        testVideoOrientation = kCGImagePropertyOrientationLeft;
-    }
+//    CGImagePropertyOrientation testVideoOrientation = kCGImagePropertyOrientationUp;
+//    if(frameCount % 100 == 0) {
+//        testVideoOrientation = kCGImagePropertyOrientationDown;
+//    }
     
     CVPixelBufferRef rotatePixelBuffer = [_pixcelBufferHandler rotatePixelBuffer:pixelBuffer
-                                                                videoOrientation:testVideoOrientation
-                                                                        useMetal:NO];
+                                                                videoOrientation:videoOrientation
+                                                                        useMetal:YES];
     
     const size_t width = CVPixelBufferGetWidth(rotatePixelBuffer);
     const size_t height = CVPixelBufferGetHeight(rotatePixelBuffer);
     
-    _configuration.videoSize = CGSizeMake(width, height);
+//    if(_configuration.videoSize.width != width || _configuration.videoSize.height != height) {
+//        _configuration.videoSize = CGSizeMake(width, height);
+//        [self resetCompressionSession:&portraitCompressionSession];
+//    }
     
-    if (width > height) {
-        OSStatus status = VTCompressionSessionEncodeFrame(landCompressionSession, pixelBuffer, presentationTimeStamp, duration, (__bridge CFDictionaryRef)properties, (__bridge_retained void *)videoExtInfo, &flags);
-        if(status != noErr){
-            NSLog(@"status != noErr, %d", status);
-            [self resetCompressionSession:&landCompressionSession];
-        }
-    } else {
-        OSStatus status = VTCompressionSessionEncodeFrame(portraitCompressionSession, pixelBuffer, presentationTimeStamp, duration, (__bridge CFDictionaryRef)properties, (__bridge_retained void *)videoExtInfo, &flags);
-        if(status != noErr){
-            NSLog(@"status != noErr, %d", status);
-            [self resetCompressionSession:&portraitCompressionSession];
-        }
+    OSStatus status = VTCompressionSessionEncodeFrame(portraitCompressionSession, pixelBuffer, presentationTimeStamp, duration, (__bridge CFDictionaryRef)properties, (__bridge_retained void *)videoExtInfo, &flags);
+    if(status != noErr){
+        NSLog(@"status != noErr, %d", status);
+        [self resetCompressionSession:&portraitCompressionSession];
     }
+    
+//    if (width > height) {
+//        OSStatus status = VTCompressionSessionEncodeFrame(landCompressionSession, pixelBuffer, presentationTimeStamp, duration, (__bridge CFDictionaryRef)properties, (__bridge_retained void *)videoExtInfo, &flags);
+//        if(status != noErr){
+//            NSLog(@"status != noErr, %d", status);
+//            [self resetCompressionSession:&landCompressionSession];
+//        }
+//    } else {
+//        OSStatus status = VTCompressionSessionEncodeFrame(portraitCompressionSession, pixelBuffer, presentationTimeStamp, duration, (__bridge CFDictionaryRef)properties, (__bridge_retained void *)videoExtInfo, &flags);
+//        if(status != noErr){
+//            NSLog(@"status != noErr, %d", status);
+//            [self resetCompressionSession:&portraitCompressionSession];
+//        }
+//    }
     
     if (rotatePixelBuffer != pixelBuffer) {
         CVPixelBufferRelease(rotatePixelBuffer);
@@ -272,7 +281,7 @@
 
 - (void)stopEncoder {
     VTCompressionSessionCompleteFrames(portraitCompressionSession, kCMTimeIndefinite);
-    VTCompressionSessionCompleteFrames(landCompressionSession, kCMTimeIndefinite);
+//    VTCompressionSessionCompleteFrames(landCompressionSession, kCMTimeIndefinite);
 }
 
 - (void)setDelegate:(id<LFVideoEncodingDelegate>)delegate {
@@ -286,7 +295,7 @@
 
 - (void)willEnterForeground:(NSNotification*)notification {
     [self resetCompressionSession:&portraitCompressionSession];
-    [self resetCompressionSession:&landCompressionSession];
+//    [self resetCompressionSession:&landCompressionSession];
 
     _isBackGround = NO;
 }
